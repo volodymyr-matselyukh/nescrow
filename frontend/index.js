@@ -6,8 +6,8 @@ import App from './App';
 // NEAR
 import { GuestBook } from './near-interface';
 import { Wallet } from './near-wallet';
-
-const CONTRACT_NAME = "malicious-basketball.testnet"
+ 
+export const APP_CONTRACT_NAME = "malicious-basketball.testnet"
 
 //volodymyr_matseliukh1.testnet
 
@@ -15,10 +15,10 @@ const CONTRACT_NAME = "malicious-basketball.testnet"
 
 // When creating the wallet you can choose to create an access key, so the user
 // can skip signing non-payable methods when talking wth the contract
-const wallet = new Wallet({ createAccessKeyFor: CONTRACT_NAME})
+const wallet = new Wallet({ createAccessKeyFor: APP_CONTRACT_NAME})
 
 // Abstract the logic of interacting with the contract to simplify your flow
-const guestBook = new GuestBook({ contractId: CONTRACT_NAME, walletToUse: wallet });
+const guestBook = new GuestBook({ walletToUse: wallet });
 
 // Setup on page load
 window.onload = async () => {

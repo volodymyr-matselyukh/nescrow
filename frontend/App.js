@@ -54,9 +54,9 @@ const App = ({ isSignedIn, guestBook, wallet }) => {
         }</td>
         </tr>
         <tr>
-          <td>My deposit {deposit}</td>
-          <td>My usdt deposit {usdtDeposit}</td>
-          <td>Platform deposit {platformUsdtDeposit}</td>
+          <td>Platform balance {deposit}</td>
+          <td>My usdt balance {usdtDeposit}</td>
+          <td>Total platform deposit {platformUsdtDeposit}</td>
         </tr>
       </table>
 
@@ -66,6 +66,9 @@ const App = ({ isSignedIn, guestBook, wallet }) => {
         : <SignIn/>
       }
 
+      <hr />
+      
+      <input type="text"  />
       <button onClick={depositFunds}>Invest</button>
       <hr />
 

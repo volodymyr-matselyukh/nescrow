@@ -2,16 +2,13 @@
 
 import { utils } from 'near-api-js';
 
-const usdtAccountId = 'usdt.fakes.testnet';
+const usdtGeneralAccountId = 'usdt.fakes.testnet';
 
 const THIRTY_TGAS = '300000000000000';
 
-//const usdtWallet = new Wallet({ createAccessKeyFor: usdtAccountId });
-
 export class GuestBook {
 
-  constructor({ contractId, walletToUse }) {
-    this.contractId = contractId;
+  constructor({ walletToUse }) {
     this.wallet = walletToUse
   }
 
@@ -19,7 +16,7 @@ export class GuestBook {
     console.log('contract id', this.contractId);
     console.log('wallet contract id', this.wallet);
 
-    const deposit = await this.wallet.viewMethod({ contractId: usdtAccountId, method: "ft_balance_of", args: { account_id: this.wallet.accountId } });
+    const deposit = await this.wallet.viewMethod({ contractId: usdtGeneralAccountId, method: "ft_balance_of", args: { account_id: this.wallet.accountId } });
 
     console.log('usdt deposit', deposit);
 
@@ -27,7 +24,7 @@ export class GuestBook {
   }
 
   async getPlatformUsdDeposit() {
-    const deposit = await this.wallet.viewMethod({ contractId: usdtAccountId, method: "ft_balance_of", args: { account_id: this.contractId } });
+    const deposit = await this.wallet.viewMethod({ contractId: usdtGeneralAccountId, method: "ft_balance_of", args: { account_id: this.contractId } });
 
     return (deposit / 1000_000).toFixed(2);
   }
@@ -49,11 +46,11 @@ export class GuestBook {
     return messages
   }
 
-  async depositFunds() {
+  async depositFunds(amount) {
     const nearDeposit = utils.format.formatNearAmount(1);
 
     console.log('near deposit', nearDeposit);
-    const deposit = await this.wallet.callMethod({ contractId: usdtAccountId, method: "ft_transfer_call", gas: THIRTY_TGAS, args: { receiver_id: this.contractId, amount: "1000000", msg: "invest" }, deposit: "1"});
+    const deposit = await this.wallet.callMethod({ contractId: usdtGeneralAccountId, method: "ft_transfer_call", gas: THIRTY_TGAS, args: { receiver_id: this.contractId, amount: 1000000 * amount + '', msg: "invest" }, deposit: "1"});
   }
 
   async addMessage(message, donation) {
