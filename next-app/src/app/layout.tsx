@@ -4,6 +4,7 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import './globals.css';
 import type React from 'react';
 import Link from 'next/link';
+import Header from './(layout)/Header';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,9 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className} id="app">
-        <Link href="/home">
-          <span className="p-4 mb-2 block text-xl uppercase hover:bg-gray-500 hover:text-white w-[120px]">Need of escrow</span>
-        </Link>
+        <Header />
 
         <AntdRegistry>
           <div className='flex p-5'>
