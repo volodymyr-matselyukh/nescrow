@@ -1,3 +1,5 @@
+'use client';
+
 import { Button, InputNumber } from 'antd';
 import { useState } from 'react';
 
@@ -10,7 +12,7 @@ const DepositFundsForm = () => {
         Amount
         <InputNumber
           size="large"
-          className="block w-full pr-5 [&>.ant-input-number-input]:text-right"
+          className="block w-full pr-5 [&_.ant-input-number-input]:text-right"
           type="number"
           value={amount}
         />
