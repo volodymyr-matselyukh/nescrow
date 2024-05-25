@@ -1,3 +1,6 @@
+# Common
+node_modules/
+
 # Rust
 contract-rs/target/
 contract-rs/Cargo.lock
@@ -21,3 +24,39 @@ frontend/node_modules/
 frontend/.parcel-cache
 frontend/yarn.lock
 frontend/package-lock.json
+
+# Frontend - next
+next-app/node_modules/
+next-app/.pnp
+next-app/.pnp.js
+next-app/.yarn/install-state.gz
+
+# testing
+next-app/coverage
+
+# next.js
+next-app/.next/
+next-app/out/
+
+# production
+next-app/build
+
+# misc
+next-app/.DS_Store
+next-app/*.pem
+
+# debug
+next-app/npm-debug.log*
+next-app/yarn-debug.log*
+next-app/yarn-error.log*
+
+# local env files
+next-app/.env*.local
+
+# vercel
+next-app/.vercel
+
+# typescript
+next-app/*.tsbuildinfo
+next-app/next-env.d.ts
+

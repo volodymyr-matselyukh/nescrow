@@ -5,6 +5,7 @@ import './globals.css';
 import type React from 'react';
 import Link from 'next/link';
 import Header from './(layout)/Header';
+import LeftNavigation from './(layout)/LeftNavigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -21,16 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className} id="app">
-        <Header />
-
         <AntdRegistry>
-          <div className='flex p-5'>
-            <menu className="flex flex-col basis-[200px]">
-              <Link href="/home" className="hover:bg-blue-400 hover:text-white">
-                Home
-              </Link>
-              <Link href="/deposit" className="hover:bg-blue-400 hover:text-white">Deposit funds</Link>
-            </menu>
+          <Header />
+          <div className="flex p-5">
+            <LeftNavigation />
             <div className="mx-auto mt-10 flex w-[500px] flex-col p-5">{children}</div>
           </div>
         </AntdRegistry>

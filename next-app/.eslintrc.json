@@ -31,5 +31,6 @@
               "checksVoidReturn": false
             }
           ]
-    }
+    },
+    "ignores": ["next.config.js"]
 }
