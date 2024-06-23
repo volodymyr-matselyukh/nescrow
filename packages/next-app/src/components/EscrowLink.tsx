@@ -1,15 +1,16 @@
 import usePageNavigationStore from '@/store/pageNavigationStore';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 
 interface Props {
-  text: string;
+  children?: ReactNode;
+  text?: string;
   href: string;
-  className: string;
+  className?: string;
 }
 
-const EscrowLink: FC<Props> = ({ text, href, className }) => {
+const EscrowLink: FC<Props> = ({ text, href, className, children }) => {
   const { setIsNavigating } = usePageNavigationStore();
   const pathname = usePathname();
 
@@ -23,7 +24,7 @@ const EscrowLink: FC<Props> = ({ text, href, className }) => {
         }
       }}
     >
-      {text}
+      {text ?? children}
     </Link>
   );
 };

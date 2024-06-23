@@ -1,18 +1,15 @@
 [package]
-name = "guestbook"
+name = "nescrow"
 version = "1.0.0"
-authors = ["Near Inc <hello@near.org>"]
+authors = ["volodymyr.matselyukh@gmail.com"]
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-near-sdk = "4.1.1"
-uint = { version = "0.9.3", default-features = false }
-
-[patch.crates-io]
-parity-secp256k1 = { git = 'https://github.com/paritytech/rust-secp256k1.git' }
+near-sdk = "5.1.0"
+borsh = "1.5.1"
 
 [profile.release]
 codegen-units = 1

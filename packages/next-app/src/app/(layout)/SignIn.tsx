@@ -1,15 +1,19 @@
 'use client';
 
-import { type WalletSelector, setupWalletSelector } from '@near-wallet-selector/core';
+import useWalletSelectorStore from '@/store/walletSelectorStore';
+import { setupWalletSelector } from '@near-wallet-selector/core';
 import { setupHereWallet } from '@near-wallet-selector/here-wallet';
 import { setupMeteorWallet } from '@near-wallet-selector/meteor-wallet';
 import { setupModal } from '@near-wallet-selector/modal-ui';
+import '@near-wallet-selector/modal-ui/styles.css';
 import { setupMyNearWallet } from '@near-wallet-selector/my-near-wallet';
+
+import { BACK_END_CONTRACT } from '@/actions/nearActions';
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Dropdown, message, type MenuProps } from 'antd';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import '@near-wallet-selector/modal-ui/styles.css';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import Deposit from './CustomerDeposit/Deposit';
 
 const NETWORK = 'testnet';
 
@@ -24,7 +28,7 @@ const items: MenuProps['items'] = [
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [accounts, setAccounts] = useState<string[]>([]);
-  const [walletSelector, setWalletSelector] = useState<WalletSelector | null>(null);
+  const { walletSelector, setWalletSelector } = useWalletSelectorStore();
 
   const signOut: MenuProps['onClick'] = async (e) => {
     if (walletSelector !== null) {
@@ -104,7 +108,7 @@ const SignIn = () => {
       }
 
       const modal = setupModal(walletSelector, {
-        contractId: 'malicious-basketball.testnet',
+        contractId: BACK_END_CONTRACT,
       });
 
       modal.show();
@@ -113,10 +117,22 @@ const SignIn = () => {
     }
   };
 
+  const copyToClipBoard = () => {
+    navigator.clipboard.writeText(accounts[0]);
+
+    message.info('Address copied to clipboard');
+  };
+
   return (
-    <>
+    <div className="flex flex-col items-end gap-2">
       {accounts.length > 0 ? (
-        <Dropdown.Button menu={menuProps} placement="bottomRight" icon={<UserOutlined />} className="w-max">
+        <Dropdown.Button
+          menu={menuProps}
+          placement="bottomRight"
+          icon={<UserOutlined />}
+          className="w-max"
+          onClick={copyToClipBoard}
+        >
           {accounts[0]}
         </Dropdown.Button>
       ) : (
@@ -124,7 +140,9 @@ const SignIn = () => {
           Sign In
         </Button>
       )}
-    </>
+
+      <Deposit />
+    </div>
   );
 };
 

@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
-import SignIn from './SignIn';
-import { Spin } from 'antd';
+import EscrowLink from '@/components/EscrowLink';
 import usePageNavigationStore from '@/store/pageNavigationStore';
-import { useEffect } from 'react';
+import { Spin } from 'antd';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import SignIn from './SignIn';
 
 const Header = () => {
   const { isNavigating, setIsNavigating } = usePageNavigationStore();
@@ -20,11 +20,11 @@ const Header = () => {
 
   return (
     <div className="flex items-center justify-between p-5">
-      <Link href="/home">
+      <EscrowLink href="/home">
         <span className="mb-2 block w-[120px] p-4 text-xl uppercase outline-dashed outline-2 outline-black hover:bg-gray-500 hover:text-white">
           Need of escrow
         </span>
-      </Link>
+      </EscrowLink>
 
       {isNavigating && (
         <span className="text-gray-300">
