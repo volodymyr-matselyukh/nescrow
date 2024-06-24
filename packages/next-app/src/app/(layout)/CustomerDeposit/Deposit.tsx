@@ -1,12 +1,18 @@
 import { getDeposit, getWalletBalance } from '@/actions/nearActions';
+import useCustomerBalanceStore from '@/store/customerBalanceStore';
 import useWalletSelectorStore from '@/store/walletSelectorStore';
 import { Spin } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 
 const Deposit = () => {
-  const [currentDeposit, setcurrentDeposit] = useState<number | null>(null);
-  const [walletBalance, setwalletBalance] = useState<number | null>(null);
+  const {
+    usdtDepositBalance,
+    setUsdtDepositBalance,
+    usdtWalletBalance,
+    setUsdtWalletBalance,
+  } = useCustomerBalanceStore();
+
   const { walletSelector } = useWalletSelectorStore();
 
   useEffect(() => {
@@ -15,11 +21,11 @@ const Deposit = () => {
     }
 
     getDeposit(walletSelector)
-      .then((amount) => setcurrentDeposit(amount))
+      .then((amount) => setUsdtDepositBalance(amount))
       .catch((e) => toast.error('Error getting deposit'));
 
     getWalletBalance(walletSelector)
-      .then((amount) => setwalletBalance(amount))
+      .then((amount) => setUsdtWalletBalance(amount))
       .catch((e) => toast.error('Error getting balance'));
   }, [walletSelector]);
 
@@ -33,12 +39,12 @@ const Deposit = () => {
   };
 
   return (
-    <div className='flex flex-col items-end'>
+    <div className="flex flex-col items-end">
       <div className="flex gap-2">
         <span>Deposit:</span>
         <span className="font-medium">
-          {currentDeposit ? (
-            getCurrencyString(currentDeposit)
+          {usdtDepositBalance != null && usdtDepositBalance != undefined ? (
+            getCurrencyString(usdtDepositBalance)
           ) : (
             <Spin className="flex" size="small" />
           )}
@@ -47,8 +53,8 @@ const Deposit = () => {
       <div className="flex gap-2">
         <span>Wallet balance:</span>
         <span className="font-medium">
-          {walletBalance ? (
-            getCurrencyString(walletBalance)
+          {usdtWalletBalance != null && usdtWalletBalance != undefined ? (
+            getCurrencyString(usdtWalletBalance)
           ) : (
             <Spin className="flex" size="small" />
           )}

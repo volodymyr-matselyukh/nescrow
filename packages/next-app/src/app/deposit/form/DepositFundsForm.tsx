@@ -1,11 +1,14 @@
 'use client';
 
 import { BACK_END_CONTRACT, getUsdtContract } from '@/actions/nearActions';
+import useCustomerBalanceStore from '@/store/customerBalanceStore';
 import useWalletSelectorStore from '@/store/walletSelectorStore';
+import { Transaction } from '@near-wallet-selector/core';
 import { Button, InputNumber, notification } from 'antd';
 import { useState } from 'react';
 
 const DepositFundsForm = () => {
+  const { usdtDepositBalance, usdtWalletBalance } = useCustomerBalanceStore();
   const [amount, setAmount] = useState<number | null>(0);
   const { walletSelector } = useWalletSelectorStore();
   const [api, contextHolder] = notification.useNotification();
@@ -28,10 +31,18 @@ const DepositFundsForm = () => {
       useGrouping: false,
     }).format(Math.pow(10, 14)); //100 TGas
 
+    const customerRegisterDeposit = new Intl.NumberFormat('us', {
+      style: 'decimal',
+      useGrouping: false,
+    }).format(Math.pow(10, 22)); //0.01 Near
+
     const usdtAmount = amount * Math.pow(10, 6);
 
-    try {
-      await wallet.signAndSendTransaction({
+    const accounts = await wallet.getAccounts();
+
+    const transactions: Transaction[] = [
+      {
+        signerId: accounts[0].accountId,
         receiverId: getUsdtContract(),
         actions: [
           {
@@ -41,13 +52,39 @@ const DepositFundsForm = () => {
               args: {
                 amount: usdtAmount.toString(),
                 receiver_id: BACK_END_CONTRACT,
-                msg: ""
+                msg: '',
               },
               gas,
               deposit: '1', //1 yoctoNear
             },
           },
         ],
+      },
+    ];
+
+    if (usdtDepositBalance === 0) {
+      transactions.unshift({
+        signerId: accounts[0].accountId,
+        receiverId: BACK_END_CONTRACT,
+        actions: [
+          {
+            type: 'FunctionCall',
+            params: {
+              methodName: 'register_customer',
+              args: {
+                customer_id: accounts[0].accountId,
+              },
+              gas,
+              deposit: customerRegisterDeposit,
+            },
+          },
+        ],
+      });
+    }
+
+    try {
+      await wallet.signAndSendTransactions({
+        transactions,
       });
     } catch (e) {
       console.log('error occured', e);
@@ -67,6 +104,7 @@ const DepositFundsForm = () => {
           type="number"
           value={amount}
           min={0}
+          max={usdtWalletBalance}
         />
       </label>
 
