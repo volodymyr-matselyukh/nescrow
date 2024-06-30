@@ -8,7 +8,8 @@
         "eslint:recommended",
         "plugin:react/recommended",
         "plugin:react/jsx-runtime",
-        "prettier"
+        "prettier",
+        "plugin:@next/next/recommended"
     ],
     "parserOptions": {
         "ecmaVersion": "latest",
@@ -24,13 +25,17 @@
         "unused-imports/no-unused-imports": "error",
         "unused-imports/no-unused-vars": "off",
         "react/react-in-jsx-scope": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/consistent-type-imports": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
+        "spaced-comment": "off",
         "@typescript-eslint/no-misused-promises": [
             "error",
             {
               "checksVoidReturn": false
             }
           ]
-    },
-    "ignores": ["next.config.js"]
+    }
 }

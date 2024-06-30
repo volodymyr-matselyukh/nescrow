@@ -21,11 +21,15 @@ const Deposit = () => {
     }
 
     getDeposit(walletSelector)
-      .then((amount) => setUsdtDepositBalance(amount))
+      .then((amount) => {
+        setUsdtDepositBalance(amount);
+      })
       .catch((e) => toast.error('Error getting deposit'));
 
     getWalletBalance(walletSelector)
-      .then((amount) => setUsdtWalletBalance(amount))
+      .then((amount) => {
+        setUsdtWalletBalance(amount);
+      })
       .catch((e) => toast.error('Error getting balance'));
   }, [walletSelector]);
 
@@ -43,7 +47,7 @@ const Deposit = () => {
       <div className="flex gap-2">
         <span>Deposit:</span>
         <span className="font-medium">
-          {usdtDepositBalance != null && usdtDepositBalance != undefined ? (
+          {usdtDepositBalance != null && usdtDepositBalance !== undefined ? (
             getCurrencyString(usdtDepositBalance)
           ) : (
             <Spin className="flex" size="small" />
@@ -53,7 +57,7 @@ const Deposit = () => {
       <div className="flex gap-2">
         <span>Wallet balance:</span>
         <span className="font-medium">
-          {usdtWalletBalance != null && usdtWalletBalance != undefined ? (
+          {usdtWalletBalance != null && usdtWalletBalance !== undefined ? (
             getCurrencyString(usdtWalletBalance)
           ) : (
             <Spin className="flex" size="small" />

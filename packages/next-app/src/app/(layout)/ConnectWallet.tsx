@@ -25,7 +25,7 @@ const items: MenuProps['items'] = [
   },
 ];
 
-const SignIn = () => {
+const ConnectWallet = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [accounts, setAccounts] = useState<string[]>([]);
   const { walletSelector, setWalletSelector } = useWalletSelectorStore();
@@ -100,7 +100,7 @@ const SignIn = () => {
     }
   };
 
-  const signIn = async () => {
+  const connectWallet = async () => {
     try {
       if (walletSelector === null) {
         toast.error("Modal isn't initialized");
@@ -117,10 +117,10 @@ const SignIn = () => {
     }
   };
 
-  const copyToClipBoard = () => {
-    navigator.clipboard.writeText(accounts[0]);
+  const copyToClipBoard = async () => {
+    await navigator.clipboard.writeText(accounts[0]);
 
-    message.info('Address copied to clipboard');
+    await message.info('Address copied to clipboard');
   };
 
   return (
@@ -136,7 +136,7 @@ const SignIn = () => {
           {accounts[0]}
         </Dropdown.Button>
       ) : (
-        <Button type="primary" onClick={signIn} loading={isLoading}>
+        <Button type="primary" onClick={connectWallet} loading={isLoading}>
           Sign In
         </Button>
       )}
@@ -146,4 +146,4 @@ const SignIn = () => {
   );
 };
 
-export default SignIn;
+export default ConnectWallet;

@@ -12,8 +12,8 @@ interface CustomerBalanceStore {
 const useCustomerBalanceStore = create<CustomerBalanceStore>()((set) => ({
   usdtWalletBalance: 0,
   usdtDepositBalance: 0,
-  setUsdtWalletBalance: (newValue) => set({ usdtWalletBalance: newValue }),
-  setUsdtDepositBalance: (newValue) => set({ usdtDepositBalance: newValue }),
+  setUsdtWalletBalance: (newValue) => { set({ usdtWalletBalance: newValue }) },
+  setUsdtDepositBalance: (newValue) => { set({ usdtDepositBalance: newValue }) },
 }));
 
 export default useCustomerBalanceStore;

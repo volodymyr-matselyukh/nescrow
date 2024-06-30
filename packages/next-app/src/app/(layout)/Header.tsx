@@ -5,7 +5,7 @@ import usePageNavigationStore from '@/store/pageNavigationStore';
 import { Spin } from 'antd';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import SignIn from './SignIn';
+import ConnectWallet from './ConnectWallet';
 
 const Header = () => {
   const { isNavigating, setIsNavigating } = usePageNavigationStore();
@@ -33,7 +33,7 @@ const Header = () => {
         </span>
       )}
 
-      <SignIn />
+      <ConnectWallet />
     </div>
   );
 };

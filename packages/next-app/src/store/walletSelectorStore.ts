@@ -8,7 +8,7 @@ interface WalletSelectorStore {
 
 const useWalletSelectorStore = create<WalletSelectorStore>()((set) => ({
   walletSelector: null,
-  setWalletSelector: (newValue) => set({ walletSelector: newValue }),
+  setWalletSelector: (newValue) => { set({ walletSelector: newValue }) },
 }));
 
 export default useWalletSelectorStore;

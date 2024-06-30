@@ -7,7 +7,7 @@ interface PageNavigationStore {
 
 const usePageNavigationStore = create<PageNavigationStore>()((set) => ({
   isNavigating: false,
-  setIsNavigating: (newValue) => set({ isNavigating: newValue }),
+  setIsNavigating: (newValue) => { set({ isNavigating: newValue }) },
 }));
 
 export default usePageNavigationStore;

@@ -1,7 +1,7 @@
 import usePageNavigationStore from '@/store/pageNavigationStore';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React, { FC, ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
 
 interface Props {
   children?: ReactNode;

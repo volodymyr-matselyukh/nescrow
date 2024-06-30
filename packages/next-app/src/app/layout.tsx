@@ -2,8 +2,6 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import type React from 'react';
-import Header from './(layout)/Header';
-import LeftNavigation from './(layout)/LeftNavigation';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -21,14 +19,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className} id="app">
-        <div className='max-w-[1024px] mx-auto'>
-          <AntdRegistry>
-            <Header />
-            <div className="flex p-5">
-              <LeftNavigation />
-              <div className="mx-auto mt-10 flex w-[500px] flex-col p-5">{children}</div>
-            </div>
-          </AntdRegistry>
+        <div className="mx-auto max-w-[1024px]">
+          <AntdRegistry>{children}</AntdRegistry>
         </div>
       </body>
     </html>
