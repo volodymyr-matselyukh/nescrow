@@ -1,4 +1,6 @@
 import React from 'react';
+import '../globals.css';
+import PublicHeader from './PublicHeader';
 
 export default function Layout({
   children,
@@ -6,6 +8,9 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="mx-auto mt-10 flex w-[500px] flex-col p-5">{children}</div>
+    <>
+      <PublicHeader />
+      <div className="flex justify-center">{children}</div>
+    </>
   );
 }

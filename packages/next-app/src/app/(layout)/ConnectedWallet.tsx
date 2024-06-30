@@ -9,7 +9,7 @@ import '@near-wallet-selector/modal-ui/styles.css';
 import { setupMyNearWallet } from '@near-wallet-selector/my-near-wallet';
 
 import { BACK_END_CONTRACT } from '@/actions/nearActions';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import { DisconnectOutlined, WalletOutlined } from '@ant-design/icons';
 import { Button, Dropdown, message, type MenuProps } from 'antd';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -19,13 +19,13 @@ const NETWORK = 'testnet';
 
 const items: MenuProps['items'] = [
   {
-    label: 'Logout',
+    label: 'Disconnect',
     key: '1',
-    icon: <LogoutOutlined />,
+    icon: <DisconnectOutlined />,
   },
 ];
 
-const ConnectWallet = () => {
+const ConnectedWallet = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [accounts, setAccounts] = useState<string[]>([]);
   const { walletSelector, setWalletSelector } = useWalletSelectorStore();
@@ -36,9 +36,9 @@ const ConnectWallet = () => {
       await wallet.signOut();
       refreshWalletAccounts();
 
-      await message.info('Logged out.');
+      await message.info('Wallet disconnected');
     } else {
-      await message.warning('No wallet logged in.');
+      await message.warning('No wallet connected');
     }
   };
 
@@ -129,15 +129,15 @@ const ConnectWallet = () => {
         <Dropdown.Button
           menu={menuProps}
           placement="bottomRight"
-          icon={<UserOutlined />}
+          icon={<WalletOutlined />}
           className="w-max"
           onClick={copyToClipBoard}
         >
-          {accounts[0]}
+          {`Wallet account: ${accounts[0]}`}
         </Dropdown.Button>
       ) : (
         <Button type="primary" onClick={connectWallet} loading={isLoading}>
-          Sign In
+          {isLoading ? "Checking wallet" : "Connect wallet" } 
         </Button>
       )}
 
@@ -146,4 +146,4 @@ const ConnectWallet = () => {
   );
 };
 
-export default ConnectWallet;
+export default ConnectedWallet;

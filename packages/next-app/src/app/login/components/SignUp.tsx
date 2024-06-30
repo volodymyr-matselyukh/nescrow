@@ -1,7 +1,9 @@
 import * as yup from 'yup';
 
+import { signUp } from '@/actions/login';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Button, Form, Input } from 'antd';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FormItem } from 'react-hook-form-antd';
 
@@ -13,22 +15,26 @@ const loginSchema = yup
     password: yup.string().min(MIN_PASSWORD_LENGTH).required(),
     repeat_password: yup
       .string()
-      .oneOf([yup.ref('password'), ''], 'Passwords must match'),
+      .oneOf([yup.ref('password')], 'Passwords must match')
+      .required(),
   })
   .required();
 
 const SignIn = () => {
-  const {
-    control,
-    handleSubmit,
-    
-  } = useForm({
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { control, handleSubmit } = useForm({
     resolver: yupResolver(loginSchema),
   });
 
   const onFinish = async () => {
-    await handleSubmit((values) => {
-      console.log('values', values);
+    await handleSubmit(async (values) => {
+      setIsLoading(true);
+      try {
+        await signUp(values.email, values.password);
+      } finally {
+        setIsLoading(false);
+      }
     })();
   };
 
@@ -39,13 +45,14 @@ const SignIn = () => {
   return (
     <>
       <Form
-        className="flex flex-col gap-8"
+        className="flex flex-col"
         name="basic"
         style={{ maxWidth: 600 }}
         initialValues={{ remember: true }}
         onFinish={onFinish}
         onFinishFailed={onFinishFailed}
         autoComplete="off"
+        layout="vertical"
       >
         <FormItem
           control={control}
@@ -66,6 +73,7 @@ const SignIn = () => {
         </FormItem>
 
         <FormItem
+          className="block"
           control={control}
           name="repeat_password"
           label="Repeat password *"
@@ -74,8 +82,14 @@ const SignIn = () => {
           <Input.Password size="large" />
         </FormItem>
 
-        <Form.Item className="text-right">
-          <Button type="primary" htmlType="submit" size="large">
+        <Form.Item className="mb-0 block text-right" layout="vertical">
+          <Button
+            type="primary"
+            htmlType="submit"
+            size="large"
+            loading={isLoading}
+            disabled={isLoading}
+          >
             Sing up
           </Button>
         </Form.Item>

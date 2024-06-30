@@ -15,11 +15,10 @@ const options = [
   { label: 'SignUp', value: SignInType.SIGN_UP },
 ];
 
-const Page = () => {
+const Page = ({ searchParams }: { searchParams: { message: string } }) => {
   const [signInType, setSignInType] = useState(SignInType.SIGN_IN);
 
   const onSignInTypeChange = ({ target: { value } }: RadioChangeEvent) => {
-    console.log('radio4 checked', value);
     setSignInType(value);
   };
 
@@ -33,16 +32,23 @@ const Page = () => {
   };
 
   return (
-    <div className="flex flex-col gap-5 text-center">
+    <div className="flex w-[500px] flex-col gap-5">
       <Radio.Group
         options={options}
         onChange={onSignInTypeChange}
         value={signInType}
         optionType="button"
         buttonStyle="solid"
+        className="text-center"
       />
 
       {getSignInComponent()}
+
+      {searchParams?.message && (
+        <p className="text-foreground rounded-lg bg-gray-300 p-4 text-center">
+          {searchParams.message}
+        </p>
+      )}
     </div>
   );
 };
