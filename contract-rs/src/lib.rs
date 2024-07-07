@@ -3,6 +3,7 @@ use near_sdk::json_types::U128;
 use near_sdk::{ env, log, near, AccountId, NearToken, Promise };
 use near_sdk::store::LookupMap;
 use types::common_types::UsdtBalance;
+use types::ft_transfer_message::FtOnTransferMessage;
 
 mod enums;
 mod types;
@@ -13,7 +14,7 @@ const USER_REGISTRATION_STORAGE_USAGE: u128 = NearToken::from_millinear(10).as_y
 
 #[near(contract_state)]
 struct Nescrow {
-    deposits: LookupMap<AccountId, UsdtBalance>,
+    deposits: LookupMap<String, UsdtBalance>, //email, usdt balance
 }
 
 impl Default for Nescrow {
@@ -35,16 +36,23 @@ impl Nescrow {
     }
 
     #[payable]
-    pub fn register_customer(&mut self, customer_id: AccountId) {
-        if self.deposits.contains_key(&customer_id) {
+    pub fn register_customer(&mut self, email: String) {
+        if String::is_empty(&email) {
+            panic!("Email should be provided");
+        }
+
+        if self.deposits.contains_key(&email) {
             return;
         }
 
-        self.deposits.insert(customer_id, U128(0));
+        self.deposits.insert(email, U128(0));
 
         let attached_deposit = env::attached_deposit();
 
-        assert!(USER_REGISTRATION_STORAGE_USAGE <= attached_deposit.as_yoctonear(), "Attached deposit too small");
+        assert!(
+            USER_REGISTRATION_STORAGE_USAGE <= attached_deposit.as_yoctonear(),
+            "Attached deposit too small"
+        );
 
         let refund = attached_deposit.as_yoctonear() - USER_REGISTRATION_STORAGE_USAGE;
 
@@ -55,8 +63,8 @@ impl Nescrow {
         }
     }
 
-    pub fn get_my_deposit(&self, sender: AccountId) -> UsdtBalance {
-        return self.deposits.get(&sender).unwrap_or(&U128(0)).clone();
+    pub fn get_my_deposit(&self, sender_email: String) -> UsdtBalance {
+        return self.deposits.get(&sender_email).unwrap_or(&U128(0)).clone();
     }
 
     pub fn ft_on_transfer(
@@ -73,8 +81,19 @@ impl Nescrow {
 
         log!("ft_on_transfer called {} {:?} {}", sender_id, amount, msg);
 
+        let parsed_message_result: Result<
+            FtOnTransferMessage,
+            near_sdk::serde_json::Error
+        > = near_sdk::serde_json::from_str(&msg);
+
+        if parsed_message_result.is_err() {
+            panic!("Error parsing message");
+        }
+
+        let sender_email = parsed_message_result.unwrap().email;
+
         let mut sender_deposit: u128 = self.deposits
-            .get(sender_id)
+            .get(&sender_email)
             .expect("Customer is not registered. Register the customer first.")
             .to_owned()
             .into();
@@ -82,7 +101,7 @@ impl Nescrow {
         let ammount_to_add: u128 = amount.into();
         sender_deposit += ammount_to_add;
 
-        self.deposits.insert(sender_id.clone(), U128(sender_deposit));
+        self.deposits.insert(sender_email, U128(sender_deposit));
 
         return U128(0);
     }

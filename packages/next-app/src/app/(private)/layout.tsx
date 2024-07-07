@@ -1,10 +1,10 @@
+import { createClient } from '@/utils/supabase/serverClient';
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import type React from 'react';
 import Header from '../(layout)/Header';
 import LeftNavigation from '../(layout)/LeftNavigation';
 import '../globals.css';
-import { createClient } from '@/utils/supabase/serverClient';
-import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -16,7 +16,6 @@ export default async function Layout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   const supabase = createClient();
 
   const {
@@ -24,17 +23,17 @@ export default async function Layout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return redirect("/login");
+    return redirect('/login');
   }
 
   return (
     <>
       <Header />
       <div className="flex p-5">
-        <LeftNavigation />
-        <div className="mx-auto mt-10 flex w-[500px] flex-col p-5">
-          {children}
+        <div className="basis-[200px] shrink-0">
+          <LeftNavigation />
         </div>
+        <div className="flex flex-col p-5">{children}</div>
       </div>
     </>
   );

@@ -14,6 +14,7 @@ import { Button, Dropdown, message, type MenuProps } from 'antd';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Deposit from './CustomerDeposit/Deposit';
+import useCustomerBalanceStore from '@/store/customerBalanceStore';
 
 const NETWORK = 'testnet';
 
@@ -29,12 +30,14 @@ const ConnectedWallet = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [accounts, setAccounts] = useState<string[]>([]);
   const { walletSelector, setWalletSelector } = useWalletSelectorStore();
+  const { setUsdtWalletBalance } = useCustomerBalanceStore();
 
   const signOut: MenuProps['onClick'] = async (e) => {
     if (walletSelector !== null) {
       const wallet = await walletSelector.wallet();
       await wallet.signOut();
       refreshWalletAccounts();
+      setUsdtWalletBalance(0);
 
       await message.info('Wallet disconnected');
     } else {

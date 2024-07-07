@@ -1,9 +1,8 @@
 import { useRouterWrapper } from '@/hooks/useRouterWrapper';
+import { useUser } from '@/hooks/useUser';
 import { createClient } from '@/utils/supabase/browserClient';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
-import { User } from '@supabase/supabase-js';
 import { Dropdown, MenuProps, message } from 'antd';
-import { useEffect, useState } from 'react';
 
 const items: MenuProps['items'] = [
   {
@@ -15,19 +14,8 @@ const items: MenuProps['items'] = [
 
 const LoggedInUser = () => {
   const { routerPush } = useRouterWrapper();
-  const [user, setUser] = useState<User | null>();
+  const { user } = useUser();
   const supabase = createClient();
-
-  useEffect(() => {
-    supabase.auth
-      .getUser()
-      .then((userObject) => {
-        setUser(userObject.data.user);
-      })
-      .catch((error) => {
-        console.log("Couldn't get user", error);
-      });
-  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();

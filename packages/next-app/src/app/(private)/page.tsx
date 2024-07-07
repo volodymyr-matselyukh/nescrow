@@ -1,3 +1,3 @@
 export default function Home() {
-  return <div className="mx-auto mt-10 flex w-[500px] flex-col p-5">Home</div>;
+  return <div className="flex flex-col p-5">Home</div>;
 }

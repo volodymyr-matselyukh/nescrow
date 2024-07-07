@@ -1,10 +1,11 @@
 'use client';
 
 import { BACK_END_CONTRACT, getUsdtContract } from '@/actions/nearActions';
+import { useUser } from '@/hooks/useUser';
 import useCustomerBalanceStore from '@/store/customerBalanceStore';
 import useWalletSelectorStore from '@/store/walletSelectorStore';
 import { Transaction } from '@near-wallet-selector/core';
-import { Button, InputNumber, notification } from 'antd';
+import { Button, Form, InputNumber, notification } from 'antd';
 import { useState } from 'react';
 
 const DepositFundsForm = () => {
@@ -12,6 +13,7 @@ const DepositFundsForm = () => {
   const [amount, setAmount] = useState<number | null>(0);
   const { walletSelector } = useWalletSelectorStore();
   const [api, contextHolder] = notification.useNotification();
+  const { user } = useUser();
 
   const depositFunds = async () => {
     if (!walletSelector) {
@@ -52,7 +54,7 @@ const DepositFundsForm = () => {
               args: {
                 amount: usdtAmount.toString(),
                 receiver_id: BACK_END_CONTRACT,
-                msg: '',
+                msg: JSON.stringify({"email": user?.email}),
               },
               gas,
               deposit: '1', //1 yoctoNear
@@ -72,7 +74,7 @@ const DepositFundsForm = () => {
             params: {
               methodName: 'register_customer',
               args: {
-                customer_id: accounts[0].accountId,
+                email: user?.email,
               },
               gas,
               deposit: customerRegisterDeposit,
@@ -93,7 +95,7 @@ const DepositFundsForm = () => {
   };
 
   return (
-    <>
+    <Form onFinish={depositFunds} className='flex flex-col'>
       {contextHolder}
       <label>
         Amount
@@ -110,13 +112,13 @@ const DepositFundsForm = () => {
 
       <Button
         type="primary"
+        htmlType="submit"
         size="large"
         className="mt-3 w-20 self-end"
-        onClick={depositFunds}
       >
         Deposit
       </Button>
-    </>
+    </Form>
   );
 };
 

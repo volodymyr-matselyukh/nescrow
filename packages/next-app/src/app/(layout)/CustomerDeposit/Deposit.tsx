@@ -1,6 +1,8 @@
 import { getDeposit, getWalletBalance } from '@/actions/nearActions';
+import { useUser } from '@/hooks/useUser';
 import useCustomerBalanceStore from '@/store/customerBalanceStore';
 import useWalletSelectorStore from '@/store/walletSelectorStore';
+import { getCurrencyString } from '@/utils/money';
 import { Spin } from 'antd';
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';
@@ -14,17 +16,12 @@ const Deposit = () => {
   } = useCustomerBalanceStore();
 
   const { walletSelector } = useWalletSelectorStore();
+  const { user } = useUser();
 
   useEffect(() => {
     if (!walletSelector) {
       return;
     }
-
-    getDeposit(walletSelector)
-      .then((amount) => {
-        setUsdtDepositBalance(amount);
-      })
-      .catch((e) => toast.error('Error getting deposit'));
 
     getWalletBalance(walletSelector)
       .then((amount) => {
@@ -33,14 +30,21 @@ const Deposit = () => {
       .catch((e) => toast.error('Error getting balance'));
   }, [walletSelector]);
 
-  const getCurrencyString = (amount: number) => {
-    const formatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    });
 
-    return formatter.format(amount);
-  };
+  useEffect(() => {
+    if (!walletSelector) {
+      return;
+    }
+
+    if(user?.email)
+      {
+        getDeposit(user?.email, walletSelector)
+        .then((amount) => {
+          setUsdtDepositBalance(amount);
+        })
+        .catch((e) => toast.error('Error getting deposit'));
+      }
+  }, [walletSelector, user?.email])
 
   return (
     <div className="flex flex-col items-end">

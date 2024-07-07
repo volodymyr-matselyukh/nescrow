@@ -43,6 +43,9 @@ importers:
       antd:
         specifier: ^5.16.5
         version: 5.18.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      dayjs:
+        specifier: ^1.11.11
+        version: 1.11.11
       near-api-js:
         specifier: ^2.1.4
         version: 2.1.4

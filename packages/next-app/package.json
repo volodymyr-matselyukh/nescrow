@@ -21,6 +21,7 @@
     "@supabase/ssr": "^0.4.0",
     "@supabase/supabase-js": "^2.44.2",
     "antd": "^5.16.5",
+    "dayjs": "^1.11.11",
     "near-api-js": "^2.1.4",
     "next": "14.2.3",
     "react": "^18",
