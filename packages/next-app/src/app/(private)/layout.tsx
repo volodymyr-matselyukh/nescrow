@@ -29,11 +29,11 @@ export default async function Layout({
   return (
     <>
       <Header />
-      <div className="flex p-5">
-        <div className="basis-[200px] shrink-0">
+      <div className="flex px-5 grow gap-5">
+        <div className="basis-[200px] shrink-0 bg-gray-200">
           <LeftNavigation />
         </div>
-        <div className="flex flex-col p-5">{children}</div>
+        <div className="flex flex-col mt-5">{children}</div>
       </div>
     </>
   );

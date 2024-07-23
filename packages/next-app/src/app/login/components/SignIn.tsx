@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FormItem } from 'react-hook-form-antd';
 import usePageNavigationStore from '@/store/pageNavigationStore';
+import { redirect } from 'next/navigation';
 
 const loginSchema = yup
   .object({
@@ -28,7 +29,11 @@ const SignIn = () => {
       try {
         await signIn(values.email, values.password);
         setIsNavigating(true);
-      } finally {
+      } 
+      catch(error){
+        return redirect('/login?message=Could not authenticate user');
+      }
+      finally {
         setIsLoading(false);
       }
     })();

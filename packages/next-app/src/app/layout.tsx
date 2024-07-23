@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className} id="app">
-        <div className="mx-auto max-w-[1024px]">
+        <div className="mx-auto max-w-[1024px] flex h-screen flex-col">
           <AntdRegistry>{children}</AntdRegistry>
         </div>
       </body>

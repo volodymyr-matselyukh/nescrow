@@ -13,7 +13,7 @@ export const signIn = async (email: string, password: string) => {
   });
 
   if (error) {
-    return redirect('/login?message=Could not authenticate user');
+    throw new Error("Login error", { cause: error });
   }
 
   return redirect('/home');

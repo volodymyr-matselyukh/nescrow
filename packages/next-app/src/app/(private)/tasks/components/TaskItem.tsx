@@ -14,10 +14,10 @@ const TaskItem: FC<Props> = ({
   task: { name, description, createdAt, reward, status },
 }) => {
   return (
-    <div className="flex cursor-pointer gap-2 border-2 border-dashed border-black p-2 hover:border-solid">
+    <div className="flex cursor-pointer gap-2 border-2 border-dashed border-black p-2 hover:border-solid rounded-lg">
       <div>
-        <div className="text-lg font-medium">{name}</div>
-        <div className="mt-5 bg-gray-200 p-5 text-sm">{description}</div>
+        <div className="bg-primary p-2 rounded-lg text-white text-center">{name}</div>
+        <div className="mt-5 bg-gray-200 p-5 text-sm rounded-lg">{description}</div>
       </div>
 
       <div className="flex min-w-44 flex-col text-sm font-medium">
@@ -34,7 +34,7 @@ const TaskItem: FC<Props> = ({
             <span>Created&nbsp;at:</span>
             <div className="flex flex-col">
               <span>{dayjs(createdAt.toString()).format('D MMM YYYY')}</span>
-              <span>{dayjs(createdAt.toString()).fromNow()}</span>
+              <span className='text-xs font-mono'>{dayjs(createdAt.toString()).fromNow()}</span>
             </div>
           </div>
         </div>

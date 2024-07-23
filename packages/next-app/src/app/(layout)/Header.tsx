@@ -20,12 +20,14 @@ const Header = () => {
   }, [pathname]);
 
   return (
-    <div className="flex items-center justify-between p-5">
-      <EscrowLink href="/home">
-        <span className="mb-2 block w-[120px] p-4 text-xl uppercase outline-dashed outline-2 outline-black hover:bg-gray-500 hover:text-white">
-          Need of escrow
-        </span>
-      </EscrowLink>
+    <div className="flex items-center justify-between px-5">
+      <div className='bg-gray-200 stretch h-full justify-center flex flex-col'>
+        <EscrowLink href="/home">
+          <span className="mb-2 block w-[200px] rounded-lg py-4 text-center text-xl uppercase outline-dashed outline-2 outline-black hover:bg-gray-500 hover:text-white">
+            Need of escrow
+          </span>
+        </EscrowLink>
+      </div>
 
       {isNavigating && (
         <span className="text-gray-300">
@@ -34,7 +36,7 @@ const Header = () => {
         </span>
       )}
 
-      <div className='flex flex-col gap-2 items-end'>
+      <div className="pt-5 flex flex-col items-end gap-2">
         <LoggedInUser />
         <ConnectedWallet />
       </div>

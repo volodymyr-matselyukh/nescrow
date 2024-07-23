@@ -38,7 +38,7 @@ const TasksContainer: FC<Props> = ({ myFrellancerTasks, myOwnerTasks }) => {
   }
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col gap-4'>
       <Radio.Group
         options={options}
         onChange={onTaskTypeChange}
@@ -48,7 +48,7 @@ const TasksContainer: FC<Props> = ({ myFrellancerTasks, myOwnerTasks }) => {
         className="text-center"
       />
 
-      <h1>{getTitle()}</h1>
+      <h1 className='font-medium'>{getTitle()}</h1>
 
       {taskType === TaskType.FREELANCER_TASK &&
         myFrellancerTasks.map((item, index) => (

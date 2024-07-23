@@ -4,7 +4,7 @@ import EscrowLink from '@/components/EscrowLink';
 
 const LeftNavigation = () => {
   return (
-    <menu className="flex flex-col bg-gray-200 self-start">
+    <menu className="flex flex-col bg-gray-200 self-start rounded-lg py-2">
       <EscrowLink
         href="/home"
         className="p-2 hover:bg-blue-400 hover:text-white"
