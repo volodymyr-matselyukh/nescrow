@@ -1,7 +1,7 @@
 use enums::storage_keys::StorageKeys;
 use near_sdk::json_types::U128;
 use near_sdk::{ env, log, near, AccountId, NearToken, Promise };
-use near_sdk::store::LookupMap;
+use near_sdk::store::{ IterableMap, LookupMap };
 use types::common_types::UsdtBalance;
 use types::ft_transfer_message::FtOnTransferMessage;
 
@@ -9,12 +9,12 @@ mod enums;
 mod types;
 mod constants;
 
-//no calculations performed, just guessing. This also includes gas for works approval.
+//no calculations performed, just guessing. This also includes gas for tasks approval.
 const USER_REGISTRATION_STORAGE_USAGE: u128 = NearToken::from_millinear(10).as_yoctonear();
 
 #[near(contract_state)]
 struct Nescrow {
-    deposits: LookupMap<String, UsdtBalance>, //email, usdt balance
+    deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //email as a root level key
 }
 
 impl Default for Nescrow {
@@ -45,7 +45,11 @@ impl Nescrow {
             return;
         }
 
-        self.deposits.insert(email, U128(0));
+        let email_hash = env::sha256_array(&email.as_bytes());
+
+        let account_balance_map = IterableMap::new(StorageKeys::AccountBalance { email_hash });
+
+        self.deposits.insert(email, account_balance_map);
 
         let attached_deposit = env::attached_deposit();
 
@@ -64,7 +68,17 @@ impl Nescrow {
     }
 
     pub fn get_my_deposit(&self, sender_email: String) -> UsdtBalance {
-        return self.deposits.get(&sender_email).unwrap_or(&U128(0)).clone();
+        let deposits = self.deposits
+            .get(&sender_email)
+            .unwrap_or_else(|| panic!("Email not registered"));
+
+        let mut total_balance: u128 = 0;
+
+        deposits.iter().for_each(|(_, &balance)| {
+            total_balance += balance.0;
+        });
+
+        return U128(total_balance);
     }
 
     pub fn ft_on_transfer(
@@ -92,16 +106,19 @@ impl Nescrow {
 
         let sender_email = parsed_message_result.unwrap().email;
 
-        let mut sender_deposit: u128 = self.deposits
-            .get(&sender_email)
-            .expect("Customer is not registered. Register the customer first.")
-            .to_owned()
-            .into();
+        let sender_deposits = self.deposits
+            .get_mut(&sender_email)
+            .expect("Customer is not registered. Register the customer first.");
 
         let ammount_to_add: u128 = amount.into();
-        sender_deposit += ammount_to_add;
 
-        self.deposits.insert(sender_email, U128(sender_deposit));
+        let existing_deposit = sender_deposits.get(sender_id);
+
+        match existing_deposit {
+            None => sender_deposits.insert(sender_id.clone(), amount),
+            Some(balance) =>
+                sender_deposits.insert(sender_id.clone(), U128(balance.0 + ammount_to_add)),
+        };
 
         return U128(0);
     }

@@ -1,6 +1,9 @@
-use near_sdk::{borsh::{ self, BorshSerialize }, BorshStorageKey};
+use near_sdk::{borsh::{ self, BorshSerialize }, BorshStorageKey, CryptoHash};
 
 #[derive(BorshStorageKey, BorshSerialize)]
 pub enum StorageKeys {
-  Deposits
+  Deposits,
+  AccountBalance {
+    email_hash: CryptoHash,
+  }
 }
