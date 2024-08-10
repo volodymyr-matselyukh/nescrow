@@ -18,6 +18,9 @@ export function createClient() {
           );
         },
       },
+      global: {
+        fetch
+      }
     },
   );
 }

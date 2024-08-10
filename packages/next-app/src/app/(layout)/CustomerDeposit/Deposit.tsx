@@ -1,4 +1,8 @@
-import { getDeposit, getWalletBalance } from '@/actions/nearActions';
+import {
+  getDeposit,
+  getWalletBalance,
+  getWithdrawableAmount,
+} from '@/actions/nearActions';
 import { useUser } from '@/hooks/useUser';
 import useCustomerBalanceStore from '@/store/customerBalanceStore';
 import useWalletSelectorStore from '@/store/walletSelectorStore';
@@ -13,6 +17,7 @@ const Deposit = () => {
     setUsdtDepositBalance,
     usdtWalletBalance,
     setUsdtWalletBalance,
+    setUsdtWithdrawableBalance,
   } = useCustomerBalanceStore();
 
   const { walletSelector } = useWalletSelectorStore();
@@ -30,21 +35,33 @@ const Deposit = () => {
       .catch((e) => toast.error('Error getting balance'));
   }, [walletSelector]);
 
+  useEffect(() => {
+    if (!walletSelector) {
+      return;
+    }
+
+    if (user?.email) {
+      getDeposit(walletSelector, user.email)
+        .then((amount) => {
+          setUsdtDepositBalance(amount);
+        })
+        .catch((e) => toast.error('Error getting deposit'));
+    }
+  }, [walletSelector, user?.email]);
 
   useEffect(() => {
     if (!walletSelector) {
       return;
     }
 
-    if(user?.email)
-      {
-        getDeposit(user?.email, walletSelector)
+    if (user?.email) {
+      getWithdrawableAmount(walletSelector, user.email)
         .then((amount) => {
-          setUsdtDepositBalance(amount);
+          setUsdtWithdrawableBalance(amount);
         })
-        .catch((e) => toast.error('Error getting deposit'));
-      }
-  }, [walletSelector, user?.email])
+        .catch((e) => toast.error('Error getting withdrawable amount'));
+    }
+  }, [walletSelector, user?.email]);
 
   return (
     <div className="flex flex-col items-end">

@@ -1,14 +1,14 @@
-import DepositFundsForm from './form/DepositFundsForm';
+import WithdrawFundsForm from "./form/WithdrawFundsForm";
 
 const Page = () => {
   return (
     <div>
-      <h1 className="mb-4 text-xl">Deposit funds</h1>
+      <h1 className="mb-4 text-xl">Withdraw funds</h1>
 
       <hr className="mb-4" />
 
       <div className="ml-auto mr-0 max-w-[400px]">
-        <DepositFundsForm />
+        <WithdrawFundsForm />
       </div>
     </div>
   );

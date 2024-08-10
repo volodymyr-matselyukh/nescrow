@@ -1,34 +1,17 @@
+use near_sdk::{testing_env, NearToken};
 
+use crate::{tests::TEST_EMAIL, USER_REGISTRATION_STORAGE_USAGE_DEPOSIT};
+
+use super::utils::setup;
 
 #[test]
-fn test_setup_succeeds() {
-    setup(None, None);
-}
+fn test_register_account() {
+    let (mut contract, mut context) = setup(None, None);
 
-#[test]
-fn test_quest_ownership() {
-    let (mut contract, mut context, quest) = setup(None, None, None);
+    assert!(contract.deposits.get(TEST_EMAIL).is_none(), "Deposit should not exist");
 
-    let owner_quests = contract.quests_per_owner(owner());
-    assert_eq!(owner_quests.len(), 1);
+    testing_env!(context.attached_deposit(NearToken::from_millinear(USER_REGISTRATION_STORAGE_USAGE_DEPOSIT)).build());
+    contract.register_customer(TEST_EMAIL.to_string());
 
-    let first_quest = owner_quests.get(0);
-    assert_eq!(first_quest.is_some(), true);
-
-    let first_quest_unwrapped = first_quest.unwrap();
-
-    contract.set_owner(first_quest_unwrapped.quest_id, user1());
-
-    let owner_quests = contract.quests_per_owner(owner());
-    assert_eq!(owner_quests.len(), 0);
-
-    let new_owner_quests = contract.quests_per_owner(user1());
-    assert_eq!(owner_quests.len(), 0);
-
-    let new_owner_first_quest = new_owner_quests.get(0);
-    assert_eq!(new_owner_first_quest.is_some(), true);
-
-    let new_owner_first_quest_unwrapped = new_owner_first_quest.unwrap();
-
-    assert_eq!(&new_owner_first_quest_unwrapped.title, &quest.title);
+    assert!(contract.deposits.get(TEST_EMAIL).is_some(), "Deposit should exist");
 }

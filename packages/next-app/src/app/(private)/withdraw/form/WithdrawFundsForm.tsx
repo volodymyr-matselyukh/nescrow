@@ -1,34 +1,33 @@
 'use client';
 
-import {
-  BACK_END_CONTRACT,
-  getIsEmailRegistered,
-  getUsdtContract,
-} from '@/actions/nearActions';
+import { BACK_END_CONTRACT } from '@/actions/nearActions';
 import { useUser } from '@/hooks/useUser';
 import useCustomerBalanceStore from '@/store/customerBalanceStore';
 import useWalletSelectorStore from '@/store/walletSelectorStore';
 import { getCurrencyString } from '@/utils/money';
 import { Account, Transaction } from '@near-wallet-selector/core';
 import { Button, Form, InputNumber, notification, Typography } from 'antd';
+
 import { useState } from 'react';
 const { Text } = Typography;
 
-const DepositFundsForm = () => {
-  const { usdtWalletBalance } = useCustomerBalanceStore();
+const WithdrawFundsForm = () => {
+  const { usdtWithdrawableBalance } = useCustomerBalanceStore();
   const [amount, setAmount] = useState<number | null>(0);
   const { walletSelector } = useWalletSelectorStore();
   const [api, contextHolder] = notification.useNotification();
   const { user } = useUser();
 
-  const depositFunds = async () => {
+  const withdrawFunds = async () => {
     if (!walletSelector) {
       api.error({ message: 'Please connect wallet' });
       return;
     }
 
     if (!amount) {
-      api.error({ message: 'Please specify the deposit amount' });
+      api.error({
+        message: `Withdraw amount should be bigger than ${getCurrencyString(0)}`,
+      });
       return;
     }
 
@@ -53,7 +52,7 @@ const DepositFundsForm = () => {
       });
     } catch (e) {
       console.log('error occured', e);
-      api.error({ message: 'Problem with the deposit' });
+      api.error({ message: 'Problem with the withdraw' });
     }
   };
 
@@ -74,24 +73,18 @@ const DepositFundsForm = () => {
       useGrouping: false,
     }).format(Math.pow(10, 14)); //100 TGas
 
-    const customerRegisterDeposit = new Intl.NumberFormat('us', {
-      style: 'decimal',
-      useGrouping: false,
-    }).format(Math.pow(10, 22)); //0.01 Near
-
     const transactions: Transaction[] = [
       {
         signerId: accounts[0].accountId,
-        receiverId: getUsdtContract(),
+        receiverId: BACK_END_CONTRACT,
         actions: [
           {
             type: 'FunctionCall',
             params: {
-              methodName: 'ft_transfer_call',
+              methodName: 'withdraw',
               args: {
                 amount: usdtAmount.toString(),
-                receiver_id: BACK_END_CONTRACT,
-                msg: JSON.stringify({ email: user?.email }),
+                receiver_email: user.email,
               },
               gas,
               deposit: '1', //1 yoctoNear
@@ -101,36 +94,11 @@ const DepositFundsForm = () => {
       },
     ];
 
-    const isEmailRegistered = await getIsEmailRegistered(
-      user.email,
-      walletSelector,
-    );
-
-    if (!isEmailRegistered) {
-      transactions.unshift({
-        signerId: accounts[0].accountId,
-        receiverId: BACK_END_CONTRACT,
-        actions: [
-          {
-            type: 'FunctionCall',
-            params: {
-              methodName: 'register_customer',
-              args: {
-                email: user?.email,
-              },
-              gas,
-              deposit: customerRegisterDeposit,
-            },
-          },
-        ],
-      });
-    }
-
     return transactions;
   };
 
   return (
-    <Form onFinish={depositFunds} className="flex flex-col">
+    <Form onFinish={withdrawFunds} className="flex flex-col">
       {contextHolder}
       <label>
         Amount
@@ -141,12 +109,15 @@ const DepositFundsForm = () => {
           type="number"
           value={amount}
           min={0}
-          max={usdtWalletBalance}
+          max={usdtWithdrawableBalance}
         />
       </label>
 
-      <Text type="success" className='self-end'>
-        Maximum amount to deposit {getCurrencyString(usdtWalletBalance)}
+      <Text type="secondary" className="self-end">
+        The amount will be withdrawn to connected wallet.
+      </Text>
+      <Text type="warning" className="self-end">
+        Maximum amount to withdraw {getCurrencyString(usdtWithdrawableBalance)}
       </Text>
 
       <Button
@@ -155,10 +126,10 @@ const DepositFundsForm = () => {
         size="large"
         className="mt-3 w-20 self-end"
       >
-        Deposit
+        Withdraw
       </Button>
     </Form>
   );
 };
 
-export default DepositFundsForm;
+export default WithdrawFundsForm;

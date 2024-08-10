@@ -16,6 +16,11 @@ const LeftNavigation = () => {
         text="Deposit funds"
       />
       <EscrowLink
+        href="/withdraw"
+        className="p-2 hover:bg-blue-400 hover:text-white"
+        text="Withdraw funds"
+      />
+      <EscrowLink
         href="/tasks"
         className="p-2 hover:bg-blue-400 hover:text-white"
         text="Tasks"

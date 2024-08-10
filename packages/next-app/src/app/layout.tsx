@@ -19,8 +19,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className} id="app">
-        <div className="mx-auto max-w-[1024px] flex h-screen flex-col">
-          <AntdRegistry>{children}</AntdRegistry>
+        <div className="flex h-full w-full">
+          <div className="bg-gray-200 grow w-full"></div>
+          <div className="flex h-screen max-w-[1024px] shrink-0 grow w-full flex-col">
+            <AntdRegistry>{children}</AntdRegistry>
+          </div>
+          <div className="w-full"></div>
         </div>
       </body>
     </html>
