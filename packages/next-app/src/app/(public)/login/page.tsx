@@ -25,9 +25,9 @@ const Page = ({ searchParams }: { searchParams: { message: string } }) => {
   const getSignInComponent = () => {
     switch (signInType) {
       case SignInType.SIGN_IN:
-        return <SignIn></SignIn>;
+        return <SignIn />;
       case SignInType.SIGN_UP:
-        return <SignUp></SignUp>;
+        return <SignUp />;
     }
   };
 

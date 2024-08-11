@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import ConnectedWallet from './ConnectedWallet';
 import LoggedInUser from './LoggedInUser';
+import Logo from '@/components/Logo';
 
 const Header = () => {
   const { isNavigating, setIsNavigating } = usePageNavigationStore();
@@ -23,9 +24,7 @@ const Header = () => {
     <div className="flex items-center justify-between pr-5">
       <div className="stretch flex h-full flex-col justify-center bg-gray-200 px-5 w-[220px]">
         <EscrowLink href="/home">
-          <span className="mb-2 block w-full rounded-lg py-4 text-center text-xl uppercase outline-dashed outline-2 outline-black hover:bg-gray-500 hover:text-white">
-            Need of escrow
-          </span>
+          <Logo />
         </EscrowLink>
       </div>
 

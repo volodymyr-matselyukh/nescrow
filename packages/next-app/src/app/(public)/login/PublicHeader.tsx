@@ -1,5 +1,7 @@
 'use client';
 
+import EscrowLink from '@/components/EscrowLink';
+import Logo from '@/components/Logo';
 import usePageNavigationStore from '@/store/pageNavigationStore';
 import { Spin } from 'antd';
 import { usePathname } from 'next/navigation';
@@ -17,10 +19,12 @@ const PublicHeader = () => {
   }, [pathname]);
 
   return (
-    <div className="flex items-center justify-between p-5">
-      <span className="mb-2 block w-[120px] p-4 text-xl uppercase outline-dashed outline-2 outline-black hover:bg-gray-500 hover:text-white">
-        Need of escrow
-      </span>
+    <div className="items-middle flex items-center justify-between">
+      <div className="flex h-[148px] w-[220px] items-center bg-gray-200 p-5">
+        <EscrowLink href="/login">
+          <Logo />
+        </EscrowLink>
+      </div>
 
       {isNavigating && (
         <span className="text-gray-300">

@@ -1,9 +1,13 @@
+'use client';
+
 import * as yup from 'yup';
 
-import { signUp } from '@/actions/login';
+import { updatePassword } from '@/actions/updatePassword';
+import usePageNavigationStore from '@/store/pageNavigationStore';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Button, Form, Input } from 'antd';
-import { useState } from 'react';
+import { Button, Form, Input, notification } from 'antd';
+import { useRouter } from 'next/navigation';
+import { FC, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FormItem } from 'react-hook-form-antd';
 
@@ -11,7 +15,6 @@ const MIN_PASSWORD_LENGTH = 8;
 
 const loginSchema = yup
   .object({
-    email: yup.string().email().required(),
     password: yup.string().min(MIN_PASSWORD_LENGTH).required(),
     repeat_password: yup
       .string()
@@ -20,8 +23,17 @@ const loginSchema = yup
   })
   .required();
 
-const SignIn = () => {
+interface Props {
+  code: string;
+}
+
+const UpdatePassword: FC<Props> = ({ code }) => {
+  const [api, contextHolder] = notification.useNotification();
+
   const [isLoading, setIsLoading] = useState(false);
+  const { setIsNavigating } = usePageNavigationStore();
+
+  const router = useRouter();
 
   const { control, handleSubmit } = useForm({
     resolver: yupResolver(loginSchema),
@@ -31,9 +43,19 @@ const SignIn = () => {
     await handleSubmit(async (values) => {
       setIsLoading(true);
       try {
-        await signUp(values.email, values.password);
+        const result = await updatePassword(code, values.password);
+        console.log(result);
+
+        setIsNavigating(true);
+        if (result.isSuccess) {
+          api.success({ message: 'Password updated' });
+          router.push('/login');
+        } else {
+          router.push(`/updatepassword?message=${result.message}&code=${code}`);
+        }
       } finally {
         setIsLoading(false);
+        setIsNavigating(false);
       }
     })();
   };
@@ -54,15 +76,7 @@ const SignIn = () => {
         autoComplete="off"
         layout="vertical"
       >
-        <FormItem
-          control={control}
-          name="email"
-          label="Email *"
-          layout="vertical"
-        >
-          <Input size="large" />
-        </FormItem>
-
+        {contextHolder}
         <FormItem
           control={control}
           name="password"
@@ -90,7 +104,7 @@ const SignIn = () => {
             loading={isLoading}
             disabled={isLoading}
           >
-            Sing up
+            Update password
           </Button>
         </Form.Item>
       </Form>
@@ -98,4 +112,4 @@ const SignIn = () => {
   );
 };
 
-export default SignIn;
+export default UpdatePassword;

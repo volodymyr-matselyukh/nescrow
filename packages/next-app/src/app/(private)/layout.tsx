@@ -2,8 +2,8 @@ import { createClient } from '@/utils/supabase/serverClient';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import type React from 'react';
-import Header from '../(layout)/Header';
-import LeftNavigation from '../(layout)/LeftNavigation';
+import Header from '../(private_layout)/Header';
+import LeftNavigation from '../(private_layout)/LeftNavigation';
 import '../globals.css';
 
 export const metadata: Metadata = {
