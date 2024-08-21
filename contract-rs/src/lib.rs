@@ -1,9 +1,12 @@
+use chrono::Utc;
 use enums::storage_keys::StorageKeys;
 use near_sdk::json_types::U128;
 use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError};
-use types::common_types::{UsdtBalance, UsdtBalanceExt};
+use types::borsh::date_utc::UtcDateTime;
+use types::common_types::{TaskId, UsdtBalance, UsdtBalanceExt};
 use types::ft_transfer_message::FtOnTransferMessage;
+use types::task::Task;
 
 mod constants;
 mod enums;
@@ -15,12 +18,18 @@ const USER_REGISTRATION_STORAGE_USAGE_DEPOSIT: u128 = NearToken::from_millinear(
 #[near(contract_state)]
 struct Nescrow {
     deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //email as a root level key
+    tasks: LookupMap<TaskId, Task>,
+    tasks_per_owner: IterableMap<AccountId, TaskId>,
+    tasks_per_engineer: IterableMap<AccountId, TaskId>,
 }
 
 impl Default for Nescrow {
     fn default() -> Self {
         Self {
             deposits: LookupMap::new(StorageKeys::Deposits),
+            tasks: LookupMap::new(StorageKeys::Tasks),
+            tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
+            tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
         }
     }
 }
@@ -32,6 +41,9 @@ impl Nescrow {
     pub fn new() -> Self {
         Self {
             deposits: LookupMap::new(StorageKeys::Deposits),
+            tasks: LookupMap::new(StorageKeys::Tasks),
+            tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
+            tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
         }
     }
 
@@ -221,7 +233,149 @@ impl Nescrow {
             "Amount to deduct is bigger then deposit"
         );
 
-        sender_deposits.insert(receiver_account_id.clone(), U128(existing_deposit.0 - ammount_to_deduct));
+        sender_deposits.insert(
+            receiver_account_id.clone(),
+            U128(existing_deposit.0 - ammount_to_deduct),
+        );
+    }
+
+    // the task is created when the owner accepts the contractor
+    pub fn create_task(mut self, task_id: TaskId, contractor: AccountId, reward: UsdtBalance) {
+        assert!(
+            !self.tasks.contains_key(&task_id),
+            "Taks has already been created"
+        );
+
+        let task_owner = env::predecessor_account_id();
+
+        let task = Task {
+            contractor: contractor.clone(),
+            owner: task_owner.clone(),
+            reward,
+            signed_by_contractor_on: None,
+            signed_by_owner_on: None,
+            submitted_by_contractor_on: None,
+            approved_on: None,
+            dispute_initiated_on: None,
+            resolution: None,
+        };
+
+        self.tasks.insert(task_id.clone(), task);
+        self.tasks_per_owner
+            .insert(task_owner.clone(), task_id.clone());
+        self.tasks_per_engineer
+            .insert(contractor.clone(), task_id.clone());
+    }
+
+    // the task is removed when the owner decides to unaccept the contractor
+    pub fn remove_task(mut self, task_id: TaskId) {
+        assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
+
+        let task_owner = env::predecessor_account_id();
+        let task = self.tasks.remove(&task_id).expect("Task not found");
+
+        assert_eq!(
+            task.owner, task_owner,
+            "Only task owner can remove the task"
+        );
+        assert!(
+            task.signed_by_owner_on.is_none(),
+            "The task is signed by owner. Unsign first before removal."
+        );
+        assert!(
+            task.signed_by_contractor_on.is_none(),
+            "The task is signed by contractor. Task removal is impossible."
+        );
+
+        self.tasks_per_owner.remove(&task_owner);
+        self.tasks_per_engineer.remove(&task.contractor);
+    }
+
+    // the task is signed by owner when he is happy with the selected contractor and wants to proceed to work started
+    pub fn sign_task_as_owner(mut self, owner_email: String, task_id: TaskId) {
+        assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
+
+        let task_owner_account_id = env::predecessor_account_id();
+
+        let withdrawable_amount =
+            self.get_withdrawable_amount(owner_email, task_owner_account_id.clone());
+
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        assert_eq!(
+            task_owner_account_id.clone(),
+            task.owner,
+            "Task has different owner."
+        );
+
+        assert!(
+            task.signed_by_owner_on.is_none(),
+            "Task is already signed by owner."
+        );
+
+        assert!(
+            withdrawable_amount >= task.reward,
+            "You have not enought deposit to cover the reward for this task."
+        );
+
+        task.signed_by_owner_on = Some(UtcDateTime(Utc::now()));
+    }
+
+    // the task is signed by owner when he is happy with the selected contractor
+    pub fn sign_task_as_contractor(mut self, task_id: TaskId) {
+        assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
+
+        let task_contractor_account_id = env::predecessor_account_id();
+
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        assert_eq!(
+            task_contractor_account_id.clone(),
+            task.contractor,
+            "Task has different contractor."
+        );
+
+        assert!(
+            task.signed_by_owner_on.is_some(),
+            "Task should be signed by the owner first."
+        );
+
+        assert!(
+            task.signed_by_contractor_on.is_none(),
+            "Task is already signed by contractor."
+        );
+
+        task.signed_by_contractor_on = Some(UtcDateTime(Utc::now()));
+    }
+
+    // the task is approved by owner when he is happy with the work done
+    pub fn approve_task(mut self, owner_email: String, task_id: TaskId) {
+        assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
+
+        let task_owner_account_id = env::predecessor_account_id();
+
+        let withdrawable_amount =
+            self.get_withdrawable_amount(owner_email, task_owner_account_id.clone());
+
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        assert_eq!(
+            task_owner_account_id.clone(),
+            task.owner,
+            "Task has different owner."
+        );
+
+        assert!(
+            task.signed_by_owner_on.is_none(),
+            "Task is already signed by owner."
+        );
+
+        assert!(
+            withdrawable_amount >= task.reward,
+            "You have not enought deposit to cover the reward for this task."
+        );
+
+        task.signed_by_owner_on = Some(UtcDateTime(Utc::now()));
     }
 
     fn get_usdt_contract() -> AccountId {
