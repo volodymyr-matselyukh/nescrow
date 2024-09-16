@@ -13,5 +13,8 @@ pub struct Task {
     pub submitted_by_contractor_on: Option<UtcDateTime>,
     pub approved_on: Option<UtcDateTime>,
     pub dispute_initiated_on: Option<UtcDateTime>,
-    pub resolution: Option<u8>, // percents
+    pub dispute_resolved_on: Option<UtcDateTime>,
+    pub completion_percentage: Option<u8>,
+    pub claimed_by_contractor_on: Option<UtcDateTime>,
+    pub claimed_by_owner_on: Option<UtcDateTime>,
 }

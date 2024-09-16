@@ -26,7 +26,7 @@ fn test_ft_on_transfer() {
         String::from(format!("{{\"email\": \"{}\"}}", TEST_EMAIL)),
     );
 
-    let deposit = contract.get_my_deposit(String::from(TEST_EMAIL));
+    let deposit = contract.get_deposit_by_email(String::from(TEST_EMAIL));
 
     assert_eq!(deposit, usdt_deposit, "Deposit should match");
 }
@@ -57,7 +57,7 @@ fn test_ft_on_transfer_multiple_wallets() {
         String::from(format!("{{\"email\": \"{}\"}}", TEST_EMAIL)),
     );
 
-    let actual_deposit = contract.get_my_deposit(String::from(TEST_EMAIL));
+    let actual_deposit = contract.get_deposit_by_email(String::from(TEST_EMAIL));
     let expected_deposit = UsdtBalance::from_usdt(2);   
 
     assert_eq!(actual_deposit, expected_deposit, "Deposit should match");

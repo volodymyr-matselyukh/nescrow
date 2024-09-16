@@ -34,7 +34,7 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
     );
 
     let withdrawable_amount_for_wallet_1 =
-        contract.get_withdrawable_amount(String::from(TEST_EMAIL), account_1());
+        contract.get_withdrawable_amount_by_account(String::from(TEST_EMAIL), account_1());
 
     assert_eq!(
         withdrawable_amount_for_wallet_1, usdt_deposit_from_wallet_1,
@@ -42,7 +42,7 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
     );
 
     let withdrawable_amount_for_wallet_2 =
-        contract.get_withdrawable_amount(String::from(TEST_EMAIL), account_2());
+        contract.get_withdrawable_amount_by_account(String::from(TEST_EMAIL), account_2());
 
     assert_eq!(
         withdrawable_amount_for_wallet_2, usdt_deposit_from_wallet_2,

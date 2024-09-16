@@ -5,7 +5,8 @@ use near_sdk::AccountId;
 pub mod register_customer_tests;
 pub mod setup_tests;
 pub mod ft_on_transfer_tests;
-pub mod get_withdrawable_amount_tests; 
+pub mod get_withdrawable_amount_tests;
+pub mod tasks_tests;
 
 pub mod utils;
 

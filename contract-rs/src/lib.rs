@@ -1,8 +1,12 @@
+use std::collections::HashSet;
+
 use chrono::Utc;
 use enums::storage_keys::StorageKeys;
 use near_sdk::json_types::U128;
-use near_sdk::store::{IterableMap, LookupMap};
+use near_sdk::store::{IterableMap, IterableSet, LookupMap};
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError};
+use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 use types::borsh::date_utc::UtcDateTime;
 use types::common_types::{TaskId, UsdtBalance, UsdtBalanceExt};
 use types::ft_transfer_message::FtOnTransferMessage;
@@ -15,12 +19,15 @@ mod types;
 //no calculations performed, just guessing. This also includes gas for tasks approval.
 const USER_REGISTRATION_STORAGE_USAGE_DEPOSIT: u128 = NearToken::from_millinear(10).as_yoctonear();
 
+const NESCROW_OWNER_FEE: Decimal = dec!(0.5);
+const NESCROW_FREELANCER_FEE: Decimal = dec!(0.5);
+
 #[near(contract_state)]
 struct Nescrow {
     deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //email as a root level key
     tasks: LookupMap<TaskId, Task>,
-    tasks_per_owner: IterableMap<AccountId, TaskId>,
-    tasks_per_engineer: IterableMap<AccountId, TaskId>,
+    tasks_per_owner: IterableMap<AccountId, HashSet<TaskId>>,
+    tasks_per_engineer: IterableMap<AccountId, HashSet<TaskId>>,
 }
 
 impl Default for Nescrow {
@@ -88,7 +95,7 @@ impl Nescrow {
         return is_email_registered;
     }
 
-    pub fn get_my_deposit(&self, sender_email: String) -> UsdtBalance {
+    pub fn get_deposit_by_email(&self, sender_email: String) -> UsdtBalance {
         let deposits = self
             .deposits
             .get(&sender_email)
@@ -103,7 +110,7 @@ impl Nescrow {
         return U128(total_balance);
     }
 
-    pub fn get_withdrawable_amount(
+    pub fn get_withdrawable_amount_by_account(
         &self,
         sender_email: String,
         account_id: AccountId,
@@ -170,8 +177,10 @@ impl Nescrow {
 
         let receiver_account_id = env::predecessor_account_id();
 
-        let withdrawable_amount =
-            self.get_withdrawable_amount(receiver_email.clone(), receiver_account_id.clone());
+        let withdrawable_amount = self.get_withdrawable_amount_by_account(
+            receiver_email.clone(),
+            receiver_account_id.clone(),
+        );
 
         assert!(withdrawable_amount.0 > 0, "Nothing to withdraw");
 
@@ -240,7 +249,7 @@ impl Nescrow {
     }
 
     // the task is created when the owner accepts the contractor
-    pub fn create_task(mut self, task_id: TaskId, contractor: AccountId, reward: UsdtBalance) {
+    pub fn create_task(&mut self, task_id: TaskId, contractor: AccountId, reward: UsdtBalance) {
         assert!(
             !self.tasks.contains_key(&task_id),
             "Taks has already been created"
@@ -257,14 +266,39 @@ impl Nescrow {
             submitted_by_contractor_on: None,
             approved_on: None,
             dispute_initiated_on: None,
-            resolution: None,
+            dispute_resolved_on: None,
+            completion_percentage: None,
+            claimed_by_contractor_on: None,
+            claimed_by_owner_on: None,
         };
 
         self.tasks.insert(task_id.clone(), task);
-        self.tasks_per_owner
-            .insert(task_owner.clone(), task_id.clone());
-        self.tasks_per_engineer
-            .insert(contractor.clone(), task_id.clone());
+
+        let existing_tasks_per_owner_unwrapped = self.tasks_per_owner.get_mut(&task_owner);
+        if existing_tasks_per_owner_unwrapped.is_some() {
+            existing_tasks_per_owner_unwrapped
+                .unwrap()
+                .insert(task_id.clone());
+        } else {
+            let mut new_tasks_per_owner = HashSet::new();
+            new_tasks_per_owner.insert(task_id.clone());
+
+            self.tasks_per_owner
+                .insert(task_owner.clone(), new_tasks_per_owner);
+        }
+
+        let existing_tasks_per_engineer_unwrapped = self.tasks_per_engineer.get_mut(&task_owner);
+        if existing_tasks_per_engineer_unwrapped.is_some() {
+            existing_tasks_per_engineer_unwrapped
+                .unwrap()
+                .insert(task_id.clone());
+        } else {
+            let mut new_tasks_per_engineer = HashSet::new();
+            new_tasks_per_engineer.insert(task_id.clone());
+
+            self.tasks_per_engineer
+                .insert(task_owner.clone(), new_tasks_per_engineer);
+        }
     }
 
     // the task is removed when the owner decides to unaccept the contractor
@@ -298,7 +332,7 @@ impl Nescrow {
         let task_owner_account_id = env::predecessor_account_id();
 
         let withdrawable_amount =
-            self.get_withdrawable_amount(owner_email, task_owner_account_id.clone());
+            self.get_withdrawable_amount_by_account(owner_email, task_owner_account_id.clone());
 
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
 
@@ -314,7 +348,8 @@ impl Nescrow {
         );
 
         assert!(
-            withdrawable_amount >= task.reward,
+            Decimal::from(withdrawable_amount.0)
+                >= Decimal::from(task.reward.0) + Decimal::from(task.reward.0) * NESCROW_OWNER_FEE,
             "You have not enought deposit to cover the reward for this task."
         );
 
@@ -349,13 +384,10 @@ impl Nescrow {
     }
 
     // the task is approved by owner when he is happy with the work done
-    pub fn approve_task(mut self, owner_email: String, task_id: TaskId) {
+    pub fn approve_task(mut self, task_id: TaskId) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
         let task_owner_account_id = env::predecessor_account_id();
-
-        let withdrawable_amount =
-            self.get_withdrawable_amount(owner_email, task_owner_account_id.clone());
 
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
 
@@ -365,17 +397,10 @@ impl Nescrow {
             "Task has different owner."
         );
 
-        assert!(
-            task.signed_by_owner_on.is_none(),
-            "Task is already signed by owner."
-        );
+        assert!(task.approved_on.is_none(), "Task is already approved.");
 
-        assert!(
-            withdrawable_amount >= task.reward,
-            "You have not enought deposit to cover the reward for this task."
-        );
-
-        task.signed_by_owner_on = Some(UtcDateTime(Utc::now()));
+        task.approved_on = Some(UtcDateTime(Utc::now()));
+        task.completion_percentage = Some(100);
     }
 
     fn get_usdt_contract() -> AccountId {
