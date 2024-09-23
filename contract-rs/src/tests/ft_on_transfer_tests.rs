@@ -1,7 +1,7 @@
 use near_sdk::{testing_env, NearToken};
 
 use crate::{
-    tests::{account_1, account_2, usdt_account, utils::setup, TEST_EMAIL},
+    tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME},
     types::common_types::{UsdtBalance, UsdtBalanceExt},
     USER_REGISTRATION_STORAGE_USAGE_DEPOSIT,
 };
@@ -18,15 +18,15 @@ fn test_ft_on_transfer() {
 
     let usdt_deposit = UsdtBalance::from_usdt(1);
 
-    contract.register_customer(TEST_EMAIL.to_string());
+    contract.register_customer(TEST_USERNAME.to_string());
 
     contract.ft_on_transfer(
         &account_1(),
         usdt_deposit,
-        String::from(format!("{{\"email\": \"{}\"}}", TEST_EMAIL)),
+        String::from(format!("{{\"email\": \"{}\"}}", TEST_USERNAME)),
     );
 
-    let deposit = contract.get_deposit_by_email(String::from(TEST_EMAIL));
+    let deposit = contract.get_deposit_by_username(String::from(TEST_USERNAME));
 
     assert_eq!(deposit, usdt_deposit, "Deposit should match");
 }
@@ -43,22 +43,22 @@ fn test_ft_on_transfer_multiple_wallets() {
 
     let usdt_deposit = UsdtBalance::from_usdt(1);
 
-    contract.register_customer(TEST_EMAIL.to_string());
+    contract.register_customer(TEST_USERNAME.to_string());
 
     contract.ft_on_transfer(
         &account_1(),
         usdt_deposit,
-        String::from(format!("{{\"email\": \"{}\"}}", TEST_EMAIL)),
+        String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
     contract.ft_on_transfer(
         &account_2(),
         usdt_deposit,
-        String::from(format!("{{\"email\": \"{}\"}}", TEST_EMAIL)),
+        String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
-    let actual_deposit = contract.get_deposit_by_email(String::from(TEST_EMAIL));
-    let expected_deposit = UsdtBalance::from_usdt(2);   
+    let actual_deposit = contract.get_deposit_by_username(String::from(TEST_USERNAME));
+    let expected_deposit = UsdtBalance::from_usdt(2);
 
     assert_eq!(actual_deposit, expected_deposit, "Deposit should match");
 }

@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use chrono::Utc;
 use enums::storage_keys::StorageKeys;
 use near_sdk::json_types::U128;
-use near_sdk::store::{IterableMap, IterableSet, LookupMap};
+use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
@@ -19,12 +19,12 @@ mod types;
 //no calculations performed, just guessing. This also includes gas for tasks approval.
 const USER_REGISTRATION_STORAGE_USAGE_DEPOSIT: u128 = NearToken::from_millinear(10).as_yoctonear();
 
-const NESCROW_OWNER_FEE: Decimal = dec!(0.5);
-const NESCROW_FREELANCER_FEE: Decimal = dec!(0.5);
+const NESCROW_OWNER_FEE: Decimal = dec!(0.005);
+//const NESCROW_FREELANCER_FEE: Decimal = dec!(0.5);
 
 #[near(contract_state)]
 struct Nescrow {
-    deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //email as a root level key
+    deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //user name as a root level key
     tasks: LookupMap<TaskId, Task>,
     tasks_per_owner: IterableMap<AccountId, HashSet<TaskId>>,
     tasks_per_engineer: IterableMap<AccountId, HashSet<TaskId>>,
@@ -55,28 +55,26 @@ impl Nescrow {
     }
 
     #[payable]
-    pub fn register_customer(&mut self, email: String) {
-        if String::is_empty(&email) {
-            panic!("Email should be provided");
+    pub fn register_customer(&mut self, username: String) {
+        if String::is_empty(&username) {
+            panic!("Username should be provided");
         }
 
-        //TODO. Add email regex validation.
-
-        if self.deposits.contains_key(&email) {
-            panic!("Email already register");
+        if self.deposits.contains_key(&username) {
+            panic!("Username already register");
         }
 
-        let email_hash = env::sha256_array(&email.as_bytes());
+        let username_hash = env::sha256_array(&username.as_bytes());
 
-        let account_balance_map = IterableMap::new(StorageKeys::AccountBalance { email_hash });
+        let account_balance_map = IterableMap::new(StorageKeys::AccountBalance { username_hash });
 
-        self.deposits.insert(email, account_balance_map);
+        self.deposits.insert(username, account_balance_map);
 
         let attached_deposit = env::attached_deposit();
 
         assert!(
             USER_REGISTRATION_STORAGE_USAGE_DEPOSIT <= attached_deposit.as_yoctonear(),
-            "Attached deposit should be >= {}",
+            "Attached deposit should be >= {} for registering on blockchain",
             NearToken::from_yoctonear(USER_REGISTRATION_STORAGE_USAGE_DEPOSIT)
         );
 
@@ -89,17 +87,17 @@ impl Nescrow {
         }
     }
 
-    pub fn is_registered(self, sender_email: String) -> bool {
-        let is_email_registered = self.deposits.contains_key(&sender_email);
+    pub fn is_registered(self, sender_username: String) -> bool {
+        let is_username_registered = self.deposits.contains_key(&sender_username);
 
-        return is_email_registered;
+        return is_username_registered;
     }
 
-    pub fn get_deposit_by_email(&self, sender_email: String) -> UsdtBalance {
+    pub fn get_deposit_by_username(&self, sender_username: String) -> UsdtBalance {
         let deposits = self
             .deposits
-            .get(&sender_email)
-            .unwrap_or_else(|| panic!("Email not registered"));
+            .get(&sender_username)
+            .unwrap_or_else(|| panic!("Username not registered"));
 
         let mut total_balance: u128 = 0;
 
@@ -112,13 +110,13 @@ impl Nescrow {
 
     pub fn get_withdrawable_amount_by_account(
         &self,
-        sender_email: String,
+        sender_username: String,
         account_id: AccountId,
     ) -> UsdtBalance {
         let deposits = self
             .deposits
-            .get(&sender_email)
-            .unwrap_or_else(|| panic!("Email not registered"));
+            .get(&sender_username)
+            .unwrap_or_else(|| panic!("Username not registered"));
 
         let account_deposit = deposits.get(&account_id);
 
@@ -149,11 +147,11 @@ impl Nescrow {
             panic!("Error parsing message");
         }
 
-        let sender_email = parsed_message_result.unwrap().email;
+        let sender_username = parsed_message_result.unwrap().username;
 
         let sender_deposits = self
             .deposits
-            .get_mut(&sender_email)
+            .get_mut(&sender_username)
             .expect("Customer is not registered. Register the customer first.");
 
         let ammount_to_add: u128 = amount.into();
@@ -170,15 +168,15 @@ impl Nescrow {
         return U128(0);
     }
 
-    pub fn withdraw(&self, receiver_email: String, amount: UsdtBalance) -> Promise {
-        let is_email_registered = self.deposits.contains_key(&receiver_email);
+    pub fn withdraw(&self, receiver_username: String, amount: UsdtBalance) -> Promise {
+        let is_username_registered = self.deposits.contains_key(&receiver_username);
 
-        assert!(is_email_registered, "Email is not registered");
+        assert!(is_username_registered, "Username is not registered");
 
         let receiver_account_id = env::predecessor_account_id();
 
         let withdrawable_amount = self.get_withdrawable_amount_by_account(
-            receiver_email.clone(),
+            receiver_username.clone(),
             receiver_account_id.clone(),
         );
 
@@ -209,7 +207,7 @@ impl Nescrow {
         return ft_transfer_promise.then(
             Self::ext(env::current_account_id())
                 .with_static_gas(Gas::from_tgas(3))
-                .ft_transfer_callback(receiver_email.clone(), receiver_account_id, amount),
+                .ft_transfer_callback(receiver_username.clone(), receiver_account_id, amount),
         );
     }
 
@@ -217,7 +215,7 @@ impl Nescrow {
     pub fn ft_transfer_callback(
         &mut self,
         #[callback_result] call_result: Result<(), PromiseError>,
-        receiver_email: String,
+        receiver_username: String,
         receiver_account_id: AccountId,
         amount: UsdtBalance,
     ) {
@@ -228,7 +226,7 @@ impl Nescrow {
 
         let sender_deposits = self
             .deposits
-            .get_mut(&receiver_email)
+            .get_mut(&receiver_username)
             .expect("Customer is not registered. Register the customer first.");
 
         let ammount_to_deduct: u128 = amount.into();
@@ -287,7 +285,7 @@ impl Nescrow {
                 .insert(task_owner.clone(), new_tasks_per_owner);
         }
 
-        let existing_tasks_per_engineer_unwrapped = self.tasks_per_engineer.get_mut(&task_owner);
+        let existing_tasks_per_engineer_unwrapped = self.tasks_per_engineer.get_mut(&contractor);
         if existing_tasks_per_engineer_unwrapped.is_some() {
             existing_tasks_per_engineer_unwrapped
                 .unwrap()
@@ -297,12 +295,12 @@ impl Nescrow {
             new_tasks_per_engineer.insert(task_id.clone());
 
             self.tasks_per_engineer
-                .insert(task_owner.clone(), new_tasks_per_engineer);
+                .insert(contractor.clone(), new_tasks_per_engineer);
         }
     }
 
     // the task is removed when the owner decides to unaccept the contractor
-    pub fn remove_task(mut self, task_id: TaskId) {
+    pub fn remove_task(&mut self, task_id: TaskId) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
         let task_owner = env::predecessor_account_id();
@@ -326,21 +324,19 @@ impl Nescrow {
     }
 
     // the task is signed by owner when he is happy with the selected contractor and wants to proceed to work started
-    pub fn sign_task_as_owner(mut self, owner_email: String, task_id: TaskId) {
+    pub fn sign_task_as_owner(&mut self, owner_username: String, task_id: TaskId) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
         let task_owner_account_id = env::predecessor_account_id();
 
         let withdrawable_amount =
-            self.get_withdrawable_amount_by_account(owner_email, task_owner_account_id.clone());
+            self.get_withdrawable_amount_by_account(owner_username, task_owner_account_id.clone());
 
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
 
-        assert_eq!(
-            task_owner_account_id.clone(),
-            task.owner,
-            "Task has different owner."
-        );
+        if task_owner_account_id.clone() != task.owner {
+            panic!("Operation forbidden. You must be an owner of the task.");
+        }
 
         assert!(
             task.signed_by_owner_on.is_none(),
@@ -357,7 +353,7 @@ impl Nescrow {
     }
 
     // the task is signed by owner when he is happy with the selected contractor
-    pub fn sign_task_as_contractor(mut self, task_id: TaskId) {
+    pub fn sign_task_as_contractor(&mut self, task_id: TaskId) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
         let task_contractor_account_id = env::predecessor_account_id();
@@ -384,7 +380,7 @@ impl Nescrow {
     }
 
     // the task is approved by owner when he is happy with the work done
-    pub fn approve_task(mut self, task_id: TaskId) {
+    pub fn approve_task(&mut self, task_id: TaskId) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
         let task_owner_account_id = env::predecessor_account_id();

@@ -2,15 +2,15 @@ use std::str::FromStr;
 
 use near_sdk::AccountId;
 
-pub mod register_customer_tests;
-pub mod setup_tests;
 pub mod ft_on_transfer_tests;
 pub mod get_withdrawable_amount_tests;
+pub mod register_customer_tests;
+pub mod setup_tests;
 pub mod tasks_tests;
 
 pub mod utils;
 
-const TEST_EMAIL: &str = "test@gmail.com";
+const TEST_USERNAME: &str = "test123";
 
 fn owner() -> AccountId {
     AccountId::from_str("owner.testnet").unwrap()

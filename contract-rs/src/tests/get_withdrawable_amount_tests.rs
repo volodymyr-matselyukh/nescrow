@@ -1,7 +1,7 @@
 use near_sdk::{testing_env, NearToken};
 
 use crate::{
-    tests::{account_1, account_2, usdt_account, utils::setup, TEST_EMAIL},
+    tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME},
     types::common_types::{UsdtBalance, UsdtBalanceExt},
     USER_REGISTRATION_STORAGE_USAGE_DEPOSIT,
 };
@@ -19,22 +19,22 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
     let usdt_deposit_from_wallet_1 = UsdtBalance::from_usdt(100);
     let usdt_deposit_from_wallet_2 = UsdtBalance::from_usdt(330);
 
-    contract.register_customer(TEST_EMAIL.to_string());
+    contract.register_customer(TEST_USERNAME.to_string());
 
     contract.ft_on_transfer(
         &account_1(),
         usdt_deposit_from_wallet_1,
-        String::from(format!("{{\"email\": \"{}\"}}", TEST_EMAIL)),
+        String::from(format!("{{\"email\": \"{}\"}}", TEST_USERNAME)),
     );
 
     contract.ft_on_transfer(
         &account_2(),
         usdt_deposit_from_wallet_2,
-        String::from(format!("{{\"email\": \"{}\"}}", TEST_EMAIL)),
+        String::from(format!("{{\"email\": \"{}\"}}", TEST_USERNAME)),
     );
 
     let withdrawable_amount_for_wallet_1 =
-        contract.get_withdrawable_amount_by_account(String::from(TEST_EMAIL), account_1());
+        contract.get_withdrawable_amount_by_account(String::from(TEST_USERNAME), account_1());
 
     assert_eq!(
         withdrawable_amount_for_wallet_1, usdt_deposit_from_wallet_1,
@@ -42,7 +42,7 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
     );
 
     let withdrawable_amount_for_wallet_2 =
-        contract.get_withdrawable_amount_by_account(String::from(TEST_EMAIL), account_2());
+        contract.get_withdrawable_amount_by_account(String::from(TEST_USERNAME), account_2());
 
     assert_eq!(
         withdrawable_amount_for_wallet_2, usdt_deposit_from_wallet_2,

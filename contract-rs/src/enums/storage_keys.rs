@@ -6,7 +6,7 @@ use near_sdk::{
 #[derive(BorshStorageKey, BorshSerialize)]
 pub enum StorageKeys {
     Deposits,
-    AccountBalance { email_hash: CryptoHash },
+    AccountBalance { username_hash: CryptoHash },
     Tasks,
     TasksPerOwner,
     TasksPerEngineer,
