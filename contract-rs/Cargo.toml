@@ -8,9 +8,8 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-near-sdk = { version = "5.2.1", features = ["unit-testing"] }
+near-sdk = { version = "5.5.0", features = ["unit-testing"] }
 borsh = "1.5.1"
-chrono = "0.4.38"
 rust_decimal = "1.36"
 rust_decimal_macros = "1.36"
 

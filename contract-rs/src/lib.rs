@@ -1,13 +1,12 @@
 use std::collections::HashSet;
 
-use chrono::Utc;
 use enums::storage_keys::StorageKeys;
+use near_sdk::env::block_timestamp_ms;
 use near_sdk::json_types::U128;
 use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use types::borsh::date_utc::UtcDateTime;
 use types::common_types::{TaskId, UsdtBalance, UsdtBalanceExt};
 use types::ft_transfer_message::FtOnTransferMessage;
 use types::task::Task;
@@ -46,6 +45,10 @@ impl Default for Nescrow {
 impl Nescrow {
     #[init]
     pub fn new() -> Self {
+        assert!(!env::state_exists(), "Contract is already initialized");
+
+        log!("Initializing the contract");
+
         Self {
             deposits: LookupMap::new(StorageKeys::Deposits),
             tasks: LookupMap::new(StorageKeys::Tasks),
@@ -349,7 +352,7 @@ impl Nescrow {
             "You have not enought deposit to cover the reward for this task."
         );
 
-        task.signed_by_owner_on = Some(UtcDateTime(Utc::now()));
+        task.signed_by_owner_on = Some(block_timestamp_ms());
     }
 
     // the task is signed by owner when he is happy with the selected contractor
@@ -376,7 +379,7 @@ impl Nescrow {
             "Task is already signed by contractor."
         );
 
-        task.signed_by_contractor_on = Some(UtcDateTime(Utc::now()));
+        task.signed_by_contractor_on = Some(block_timestamp_ms());
     }
 
     // the task is approved by owner when he is happy with the work done
@@ -395,7 +398,7 @@ impl Nescrow {
 
         assert!(task.approved_on.is_none(), "Task is already approved.");
 
-        task.approved_on = Some(UtcDateTime(Utc::now()));
+        task.approved_on = Some(block_timestamp_ms());
         task.completion_percentage = Some(100);
     }
 
