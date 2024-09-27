@@ -17,6 +17,7 @@ mod types;
 
 //no calculations performed, just guessing. This also includes gas for tasks approval.
 const USER_REGISTRATION_STORAGE_USAGE_DEPOSIT: u128 = NearToken::from_millinear(10).as_yoctonear();
+const USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT: u128 = NearToken::from_millinear(10).as_yoctonear();
 
 const NESCROW_OWNER_FEE: Decimal = dec!(0.005);
 //const NESCROW_FREELANCER_FEE: Decimal = dec!(0.5);
@@ -250,6 +251,7 @@ impl Nescrow {
     }
 
     // the task is created when the owner accepts the contractor
+    #[payable]
     pub fn create_task(&mut self, task_id: TaskId, contractor: AccountId, reward: UsdtBalance) {
         assert!(
             !self.tasks.contains_key(&task_id),
@@ -299,6 +301,22 @@ impl Nescrow {
 
             self.tasks_per_engineer
                 .insert(contractor.clone(), new_tasks_per_engineer);
+        }
+
+        let attached_deposit = env::attached_deposit();
+
+        assert!(
+            USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT <= attached_deposit.as_yoctonear(),
+            "Attached deposit should be >= {} for task creation on blockchain",
+            NearToken::from_yoctonear(USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT)
+        );
+
+        let refund = attached_deposit.as_yoctonear() - USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT;
+
+        log!("Deposit to return {}", refund);
+
+        if refund > 0 {
+            Promise::new(env::predecessor_account_id()).transfer(NearToken::from_yoctonear(refund));
         }
     }
 
