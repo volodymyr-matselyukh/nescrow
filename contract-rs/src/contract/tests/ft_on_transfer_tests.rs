@@ -23,7 +23,7 @@ fn test_ft_on_transfer() {
     contract.ft_on_transfer(
         &account_1(),
         usdt_deposit,
-        String::from(format!("{{\"email\": \"{}\"}}", TEST_USERNAME)),
+        String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
     let deposit = contract.get_deposit_by_username(String::from(TEST_USERNAME));

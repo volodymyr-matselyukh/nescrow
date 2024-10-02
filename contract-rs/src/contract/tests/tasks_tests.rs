@@ -1,14 +1,16 @@
 use near_sdk::{testing_env, NearToken};
 
 use crate::{
-    contract::tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME},
-    contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT,
+    contract::{
+        tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME},
+        USER_REGISTRATION_STORAGE_USAGE_DEPOSIT, USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
+    },
     types::common_types::{UsdtBalance, UsdtBalanceExt},
 };
 
 #[test]
 fn test_create_task() {
-    let (mut contract, _) = setup(None, Some(account_1()));
+    let (mut contract, mut context) = setup(None, Some(account_1()));
 
     const TASK_1_ID: &str = "task_1";
 
@@ -27,6 +29,12 @@ fn test_create_task() {
     );
 
     let reward = 1000;
+
+    testing_env!(context
+        .attached_deposit(NearToken::from_yoctonear(
+            USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT
+        ))
+        .build());
 
     contract.create_task(
         String::from(TASK_1_ID),
@@ -54,11 +62,17 @@ fn test_create_task() {
 
 #[test]
 fn test_remove_task() {
-    let (mut contract, _) = setup(None, Some(account_1()));
+    let (mut contract, mut context) = setup(None, Some(account_1()));
 
     const TASK_1_ID: &str = "task_1";
 
     let reward = 1000;
+
+    testing_env!(context
+        .attached_deposit(NearToken::from_yoctonear(
+            USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT
+        ))
+        .build());
 
     contract.create_task(
         String::from(TASK_1_ID),

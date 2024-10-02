@@ -24,13 +24,13 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
     contract.ft_on_transfer(
         &account_1(),
         usdt_deposit_from_wallet_1,
-        String::from(format!("{{\"email\": \"{}\"}}", TEST_USERNAME)),
+        String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
     contract.ft_on_transfer(
         &account_2(),
         usdt_deposit_from_wallet_2,
-        String::from(format!("{{\"email\": \"{}\"}}", TEST_USERNAME)),
+        String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
     let withdrawable_amount_for_wallet_1 =
