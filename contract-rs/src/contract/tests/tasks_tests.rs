@@ -1,7 +1,9 @@
 use near_sdk::{testing_env, NearToken};
 
 use crate::{
-    tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME}, types::common_types::{UsdtBalance, UsdtBalanceExt}, USER_REGISTRATION_STORAGE_USAGE_DEPOSIT
+    contract::tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME},
+    contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT,
+    types::common_types::{UsdtBalance, UsdtBalanceExt},
 };
 
 #[test]
@@ -14,13 +16,15 @@ fn test_create_task() {
 
     assert!(task_1.is_none(), "Task should not exist");
 
-    assert!(contract
-        .tasks_per_owner
-        .get(&account_1()).is_none(), "Account 1 shouldn't have tasks as task owner");
+    assert!(
+        contract.tasks_per_owner.get(&account_1()).is_none(),
+        "Account 1 shouldn't have tasks as task owner"
+    );
 
-    assert!(contract
-        .tasks_per_engineer
-        .get(&account_2()).is_none(), "Account 2 shouldn't have tasks as task contractor ");
+    assert!(
+        contract.tasks_per_engineer.get(&account_2()).is_none(),
+        "Account 2 shouldn't have tasks as task contractor "
+    );
 
     let reward = 1000;
 
@@ -31,7 +35,11 @@ fn test_create_task() {
     );
 
     let task_from_blockchain = contract.tasks.get(TASK_1_ID).expect("Task should exist");
-    assert_eq!(task_from_blockchain.reward, UsdtBalance::from_usdt(reward), "Reward should be 1000");
+    assert_eq!(
+        task_from_blockchain.reward,
+        UsdtBalance::from_usdt(reward),
+        "Reward should be 1000"
+    );
 
     contract
         .tasks_per_owner
@@ -59,20 +67,22 @@ fn test_remove_task() {
     );
 
     contract.tasks.get(TASK_1_ID).expect("Task should exist");
-    
+
     contract.remove_task(String::from(TASK_1_ID));
 
     let task_1 = contract.tasks.get(TASK_1_ID);
 
     assert!(task_1.is_none(), "Task should not exist");
 
-    assert!(contract
-        .tasks_per_owner
-        .get(&account_1()).is_none(), "Account 1 shouldn't have tasks as task owner");
+    assert!(
+        contract.tasks_per_owner.get(&account_1()).is_none(),
+        "Account 1 shouldn't have tasks as task owner"
+    );
 
-    assert!(contract
-        .tasks_per_engineer
-        .get(&account_2()).is_none(), "Account 2 shouldn't have tasks as task contractor ");
+    assert!(
+        contract.tasks_per_engineer.get(&account_2()).is_none(),
+        "Account 2 shouldn't have tasks as task contractor "
+    );
 }
 
 #[test]
@@ -97,7 +107,7 @@ fn test_sign_task_as_owner() {
     );
 
     contract.register_customer(TEST_USERNAME.to_string());
-    
+
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
     contract.ft_on_transfer(
@@ -111,7 +121,10 @@ fn test_sign_task_as_owner() {
     contract.sign_task_as_owner(TEST_USERNAME.to_string(), String::from(TASK_1_ID));
 
     let task_from_blockchain = contract.tasks.get(TASK_1_ID).expect("Task should exist");
-    assert!(task_from_blockchain.signed_by_owner_on.is_some(), "Signed by owner should be Some");
+    assert!(
+        task_from_blockchain.signed_by_owner_on.is_some(),
+        "Signed by owner should be Some"
+    );
 }
 
 #[test]
@@ -137,7 +150,7 @@ fn test_sign_task_as_owner_wront_owner() {
     );
 
     contract.register_customer(TEST_USERNAME.to_string());
-    
+
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
     contract.ft_on_transfer(

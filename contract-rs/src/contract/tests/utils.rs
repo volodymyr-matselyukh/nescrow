@@ -1,6 +1,6 @@
 use near_sdk::{test_utils::VMContextBuilder, testing_env, AccountId, NearToken};
 
-use crate::{tests::owner, Nescrow};
+use crate::{contract::tests::owner, contract::Nescrow};
 
 pub fn setup(
     contract_owner_account_id: Option<AccountId>,

@@ -1,9 +1,9 @@
 use near_sdk::{testing_env, NearToken};
 
 use crate::{
-    tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME},
+    contract::tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME},
+    contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT,
     types::common_types::{UsdtBalance, UsdtBalanceExt},
-    USER_REGISTRATION_STORAGE_USAGE_DEPOSIT,
 };
 
 #[test]

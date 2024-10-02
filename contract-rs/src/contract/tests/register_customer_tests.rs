@@ -1,6 +1,6 @@
 use near_sdk::{testing_env, NearToken};
 
-use crate::{tests::TEST_USERNAME, USER_REGISTRATION_STORAGE_USAGE_DEPOSIT};
+use crate::{contract::tests::TEST_USERNAME, contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT};
 
 use super::utils::setup;
 
