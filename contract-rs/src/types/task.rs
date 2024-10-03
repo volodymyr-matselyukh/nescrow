@@ -1,10 +1,14 @@
+use near_sdk::serde::{Deserialize, Serialize};
 use borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::AccountId;
 
 use super::common_types::UsdtBalance;
 
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct Task {
+    pub task_id: String,
     pub owner: AccountId,
     pub contractor: AccountId,
     pub reward: UsdtBalance,

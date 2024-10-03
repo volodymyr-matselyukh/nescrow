@@ -5,6 +5,7 @@ use near_sdk::{env, log, near, AccountId, NearToken, Promise};
 use rust_decimal::Decimal;
 
 use crate::types::common_types::{TaskId, UsdtBalance};
+use crate::types::pagination::Pagination;
 use crate::types::task::Task;
 
 use super::{Nescrow, NescrowExt, USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT, NESCROW_OWNER_FEE};
@@ -23,6 +24,7 @@ impl Nescrow {
         let task_owner = env::predecessor_account_id();
 
         let task = Task {
+            task_id: task_id.clone(),
             contractor: contractor.clone(),
             owner: task_owner.clone(),
             reward,
@@ -80,6 +82,34 @@ impl Nescrow {
         if refund > 0 {
             Promise::new(env::predecessor_account_id()).transfer(NearToken::from_yoctonear(refund));
         }
+    }
+
+    pub fn get_owner_tasks(&self, task_owner: AccountId, pagination: Option<Pagination>) -> Vec<&Task> {
+        let pagination = pagination.unwrap_or_default();
+
+        let tasks_per_owner = self.tasks_per_owner.get(&task_owner);
+
+        if !tasks_per_owner.is_some() {
+            return Vec::new();
+        }
+
+        return tasks_per_owner
+            .unwrap()
+            .iter()
+            .take(pagination.take())
+            .skip(pagination.skip())
+            .filter_map(|task_id| {
+                let task = self.tasks.get(task_id);
+
+                if !task.is_some() {
+                    return None;
+                }
+
+                let task_unwrapped = task.unwrap();
+
+                return Some(task_unwrapped);
+            })
+            .collect();
     }
 
     // the task is removed when the owner decides to unaccept the contractor
