@@ -112,6 +112,14 @@ impl Nescrow {
             .collect();
     }
 
+    pub fn get_task(&self, task_id: TaskId) -> &Task {
+        let task = self.tasks.get(&task_id);
+
+        assert!(task.is_some(), "Task not found");
+
+        return task.unwrap();
+    }
+
     // the task is removed when the owner decides to unaccept the contractor
     pub fn remove_task(&mut self, task_id: TaskId) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");

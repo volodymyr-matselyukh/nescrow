@@ -33,3 +33,7 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 # Read get_owners_tasks
 
 `near contract call-function as-read-only foolish-bridge.testnet get_owner_tasks json-args '{"task_owner": "truthful-circle.testnet"}' network-config testnet now`
+
+# Read get_task
+
+`near contract call-function as-read-only foolish-bridge.testnet get_task json-args '{"task_id": "f55f9aad-b2a4-4938-9c82-1c80d9f9a30d"}' network-config testnet now`
