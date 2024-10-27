@@ -36,4 +36,4 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 # Read get_task
 
-`near contract call-function as-read-only foolish-bridge.testnet get_task json-args '{"task_id": "f55f9aad-b2a4-4938-9c82-1c80d9f9a30d"}' network-config testnet now`
+`near contract call-function as-read-only foolish-bridge.testnet get_task json-args '{"task_id": "e7d34dcd-aedc-4e36-948b-a3f824600e57"}' network-config testnet now`

@@ -8,7 +8,7 @@ use crate::types::common_types::{TaskId, UsdtBalance};
 use crate::types::pagination::Pagination;
 use crate::types::task::Task;
 
-use super::{Nescrow, NescrowExt, USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT, NESCROW_OWNER_FEE};
+use super::{Nescrow, NescrowExt, NESCROW_OWNER_FEE, USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT};
 
 #[near]
 #[allow(dead_code)]
@@ -28,6 +28,7 @@ impl Nescrow {
             contractor: contractor.clone(),
             owner: task_owner.clone(),
             reward,
+            task_hash: None,
             signed_by_contractor_on: None,
             signed_by_owner_on: None,
             submitted_by_contractor_on: None,
@@ -84,7 +85,11 @@ impl Nescrow {
         }
     }
 
-    pub fn get_owner_tasks(&self, task_owner: AccountId, pagination: Option<Pagination>) -> Vec<&Task> {
+    pub fn get_owner_tasks(
+        &self,
+        task_owner: AccountId,
+        pagination: Option<Pagination>,
+    ) -> Vec<&Task> {
         let pagination = pagination.unwrap_or_default();
 
         let tasks_per_owner = self.tasks_per_owner.get(&task_owner);
@@ -101,7 +106,7 @@ impl Nescrow {
             .filter_map(|task_id| {
                 let task = self.tasks.get(task_id);
 
-                if !task.is_some() {
+                if task.is_none() {
                     return None;
                 }
 
@@ -120,7 +125,7 @@ impl Nescrow {
         return task.unwrap();
     }
 
-    // the task is removed when the owner decides to unaccept the contractor
+    // the task is removed when the owner decides to reject the contractor
     pub fn remove_task(&mut self, task_id: TaskId) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
@@ -145,7 +150,12 @@ impl Nescrow {
     }
 
     // the task is signed by owner when he is happy with the selected contractor and wants to proceed to work started
-    pub fn sign_task_as_owner(&mut self, owner_username: String, task_id: TaskId) {
+    pub fn sign_task_as_owner(
+        &mut self,
+        owner_username: String,
+        task_id: TaskId,
+        task_hash: String,
+    ) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
         let task_owner_account_id = env::predecessor_account_id();
@@ -170,11 +180,42 @@ impl Nescrow {
             "You have not enought deposit to cover the reward for this task."
         );
 
+        let is_hash_changed: bool = task.task_hash.is_some()
+            && task.task_hash.as_ref().unwrap().as_str() != task_hash.as_str();
+
+        if task.signed_by_contractor_on.is_some() && is_hash_changed {
+            task.signed_by_contractor_on = None;
+        }
+
         task.signed_by_owner_on = Some(block_timestamp_ms());
+        task.task_hash = Some(task_hash);
+    }
+
+    // the task is signed by owner when he is happy with the selected contractor and wants to proceed to work started
+    pub fn unsign_task_as_owner(&mut self, task_id: TaskId) {
+        assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
+
+        let task_owner_account_id = env::predecessor_account_id();
+
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        if task_owner_account_id.clone() != task.owner {
+            panic!("Operation forbidden. You must be an owner of the task");
+        }
+
+        assert!(task.signed_by_owner_on.is_some(), "Task is not signed yet");
+
+        assert!(
+            task.signed_by_contractor_on.is_none(),
+            "Task is signed by contractor. Unsigning is impossible"
+        );
+
+        task.signed_by_owner_on = None;
+        task.task_hash = None;
     }
 
     // the task is signed by owner when he is happy with the selected contractor
-    pub fn sign_task_as_contractor(&mut self, task_id: TaskId) {
+    pub fn sign_task_as_contractor(&mut self, task_id: TaskId, task_hash: String) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
         let task_contractor_account_id = env::predecessor_account_id();
@@ -184,17 +225,23 @@ impl Nescrow {
         assert_eq!(
             task_contractor_account_id.clone(),
             task.contractor,
-            "Task has different contractor."
-        );
-
-        assert!(
-            task.signed_by_owner_on.is_some(),
-            "Task should be signed by the owner first."
+            "Task has different contractor"
         );
 
         assert!(
             task.signed_by_contractor_on.is_none(),
-            "Task is already signed by contractor."
+            "Task is already signed by contractor"
+        );
+
+        assert!(
+            task.signed_by_owner_on.is_some(),
+            "Task should be signed by the owner first"
+        );
+
+        assert_eq!(
+            task_hash.as_str(),
+            task.task_hash.as_ref().unwrap(),
+            "Task hash is different from that signed by owner"
         );
 
         task.signed_by_contractor_on = Some(block_timestamp_ms());

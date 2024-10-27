@@ -12,6 +12,7 @@ pub struct Task {
     pub owner: AccountId,
     pub contractor: AccountId,
     pub reward: UsdtBalance,
+    pub task_hash: Option<String>, // has reward, title, description
     pub signed_by_owner_on: Option<u64>,
     pub signed_by_contractor_on: Option<u64>,
     pub submitted_by_contractor_on: Option<u64>,
