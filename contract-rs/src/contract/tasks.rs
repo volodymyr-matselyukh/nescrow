@@ -85,6 +85,27 @@ impl Nescrow {
         }
     }
 
+    pub fn update_task_reward(&mut self, task_id: TaskId, reward: UsdtBalance) {
+        let task_owner_account_id = env::predecessor_account_id();
+
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        if task_owner_account_id.clone() != task.owner {
+            panic!("Operation forbidden. You must be an owner of the task");
+        }
+
+        if task.signed_by_owner_on.is_some() && task.signed_by_contractor_on.is_some() {
+            panic!("Operation forbidden. Task has been signed by both owner and contractor. Modifying is impossible");
+        }
+
+        assert!(
+            task.signed_by_owner_on.is_none(),
+            "Task is already signed by owner. Unsign the task first"
+        );
+
+        task.reward = reward;
+    }
+
     pub fn get_owner_tasks(
         &self,
         task_owner: AccountId,
