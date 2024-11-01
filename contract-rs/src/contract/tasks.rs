@@ -138,6 +138,38 @@ impl Nescrow {
             .collect();
     }
 
+    pub fn get_engineer_tasks(
+        &self,
+        task_contractor: AccountId,
+        pagination: Option<Pagination>,
+    ) -> Vec<&Task> {
+        let pagination = pagination.unwrap_or_default();
+
+        let tasks_per_contractor = self.tasks_per_engineer.get(&task_contractor);
+
+        if !tasks_per_contractor.is_some() {
+            return Vec::new();
+        }
+
+        return tasks_per_contractor
+            .unwrap()
+            .iter()
+            .take(pagination.take())
+            .skip(pagination.skip())
+            .filter_map(|task_id| {
+                let task = self.tasks.get(task_id);
+
+                if task.is_none() {
+                    return None;
+                }
+
+                let task_unwrapped = task.unwrap();
+
+                return Some(task_unwrapped);
+            })
+            .collect();
+    }
+
     pub fn get_task(&self, task_id: TaskId) -> &Task {
         let task = self.tasks.get(&task_id);
 
@@ -268,10 +300,28 @@ impl Nescrow {
         task.signed_by_contractor_on = Some(block_timestamp_ms());
     }
 
+    // contractor performs a work submit when the work is done
+    pub fn submit_work(&mut self, task_id: TaskId) {
+        let task_contractor_id = env::predecessor_account_id();
+
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        assert_eq!(
+            task_contractor_id.clone(),
+            task.contractor,
+            "Task has different contractor."
+        );
+
+        assert!(
+            task.submitted_by_contractor_on.is_none(),
+            "Task is already submitted."
+        );
+
+        task.submitted_by_contractor_on = Some(block_timestamp_ms());
+    }
+
     // the task is approved by owner when he is happy with the work done
     pub fn approve_task(&mut self, task_id: TaskId) {
-        assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
-
         let task_owner_account_id = env::predecessor_account_id();
 
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
@@ -283,6 +333,11 @@ impl Nescrow {
         );
 
         assert!(task.approved_on.is_none(), "Task is already approved.");
+
+        assert!(
+            task.submitted_by_contractor_on.is_some(),
+            "Work should be submitted first."
+        );
 
         task.approved_on = Some(block_timestamp_ms());
         task.completion_percentage = Some(100);
