@@ -12,6 +12,14 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 `near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "volodymyr_matseliukh1.testnet"}' network-config testnet now`
 
+# Read nescrow.testnet USDT balance
+
+`near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "nescrow.testnet"}' network-config testnet now`
+
+# Read ad-brick.testnet USDT balance
+
+`near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "ad-brick.testnet"}' network-config testnet now`
+
 # Call ft_transfer
 
 `near contract call-function as-transaction usdt.fakes.testnet ft_transfer_call json-args '{"amount": "2", "receiver_id": "ad-brick.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as volodymyr_matseliukh1.testnet network-config testnet sign-with-keychain send`
@@ -26,7 +34,7 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 `near contract call-function as-transaction ad-brick.testnet register_customer json-args '{"username": "witty"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as ad-brick.testnet network-config testnet sign-with-keychain send`
 
-# Call get_withdrawable_amount
+# Read get_withdrawable_amount
 
 `near contract call-function as-read-only ad-brick.testnet get_withdrawable_amount json-args '{"sender_email": "vova@navirego.com", "account_id": "truthful-circle.testnet"}' network-config testnet now`
 
@@ -36,4 +44,8 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 # Read get_task
 
-`near contract call-function as-read-only ad-brick.testnet get_task json-args '{"task_id": "7af377e0-ba93-45f6-977a-76bfe0463468"}' network-config testnet now`
+`near contract call-function as-read-only ad-brick.testnet get_task json-args '{"task_id": "e7d34dcd-aedc-4e36-948b-a3f824600e57"}' network-config testnet now`
+
+# Call reset_claim
+
+`near contract call-function as-transaction ad-brick.testnet reset_claim json-args '{"task_id": "e7d34dcd-aedc-4e36-948b-a3f824600e57"}' prepaid-gas '100.0 Tgas' attached-deposit '0 Near' sign-as ad-brick.testnet network-config testnet sign-with-keychain send`

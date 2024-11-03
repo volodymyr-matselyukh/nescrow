@@ -1,14 +1,18 @@
 use std::collections::HashSet;
 
 use near_sdk::env::block_timestamp_ms;
-use near_sdk::{env, log, near, AccountId, NearToken, Promise};
+use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise};
 use rust_decimal::Decimal;
 
+use crate::contract::utils::{get_nescrow_beneficiary_contract, get_usdt_contract};
 use crate::types::common_types::{TaskId, UsdtBalance};
 use crate::types::pagination::Pagination;
 use crate::types::task::Task;
 
-use super::{Nescrow, NescrowExt, NESCROW_OWNER_FEE, USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT};
+use super::{
+    Nescrow, NescrowExt, NESCROW_FREELANCER_FEE, NESCROW_OWNER_FEE,
+    USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
+};
 
 #[near]
 #[allow(dead_code)]
@@ -341,5 +345,66 @@ impl Nescrow {
 
         task.approved_on = Some(block_timestamp_ms());
         task.completion_percentage = Some(100);
+    }
+
+    pub fn claim_by_contractor(&mut self, task_id: TaskId) -> Promise {
+        let task_contractor_account_id = env::predecessor_account_id();
+
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        assert_eq!(
+            task_contractor_account_id.clone(),
+            task.contractor,
+            "Task has different contractor."
+        );
+
+        assert!(task.approved_on.is_some(), "Task is not approved.");
+        assert!(
+            task.completion_percentage.is_some(),
+            "Task completion percantage is undefined."
+        );
+
+        let nescrow_felancer_fee = Decimal::from(task.reward.0) * NESCROW_FREELANCER_FEE;
+        let nescrow_owner_fee = Decimal::from(task.reward.0) * NESCROW_OWNER_FEE;
+
+        let amount_to_claim =
+            Decimal::from((task.completion_percentage.unwrap() / 100) as u128 * task.reward.0)
+                - nescrow_felancer_fee;
+
+        let usdt_contract_id = get_usdt_contract();
+
+        let contractor_transfer_promise = Promise::new(usdt_contract_id.clone()).function_call(
+            "ft_transfer".to_string(),
+            near_sdk::serde_json::json!({
+                "amount": amount_to_claim.round().to_string(),
+                "receiver_id": task_contractor_account_id.clone(),
+            })
+            .to_string()
+            .into_bytes(),
+            NearToken::from_yoctonear(1),
+            Gas::from_tgas(3),
+        );
+
+        task.claimed_by_contractor_on = Some(block_timestamp_ms());
+
+        return contractor_transfer_promise.then(
+            Promise::new(usdt_contract_id.clone()).function_call(
+                "ft_transfer".to_string(),
+                near_sdk::serde_json::json!({
+                    "amount": (nescrow_felancer_fee + nescrow_owner_fee).round().to_string(),
+                    "receiver_id": get_nescrow_beneficiary_contract(),
+                })
+                .to_string()
+                .into_bytes(),
+                NearToken::from_yoctonear(1),
+                Gas::from_tgas(3),
+            ),
+        );
+    }
+
+    pub fn reset_claim(&mut self, task_id: TaskId) {
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        task.claimed_by_contractor_on = None;
     }
 }

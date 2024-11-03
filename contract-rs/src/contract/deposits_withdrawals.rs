@@ -5,6 +5,7 @@ use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError}
 use crate::enums::storage_keys::StorageKeys;
 use crate::types::common_types::{UsdtBalance, UsdtBalanceExt};
 use crate::types::ft_transfer_message::FtOnTransferMessage;
+use super::utils::get_usdt_contract;
 
 use super::{Nescrow, NescrowExt};
 
@@ -64,7 +65,7 @@ impl Nescrow {
         amount: UsdtBalance,
         msg: String,
     ) -> UsdtBalance {
-        let usdt_contract_id = Nescrow::get_usdt_contract();
+        let usdt_contract_id = get_usdt_contract();
 
         if usdt_contract_id != env::predecessor_account_id() {
             panic!("untrusted contract");
@@ -122,7 +123,7 @@ impl Nescrow {
             UsdtBalance::to_usdt(withdrawable_amount)
         );
 
-        let usdt_contract_id = Nescrow::get_usdt_contract();
+        let usdt_contract_id = get_usdt_contract();
 
         let ft_transfer_promise = Promise::new(usdt_contract_id).function_call(
             "ft_transfer".to_string(),
@@ -176,19 +177,5 @@ impl Nescrow {
             receiver_account_id.clone(),
             U128(existing_deposit.0 - ammount_to_deduct),
         );
-    }
-
-    fn get_usdt_contract() -> AccountId {
-        let current_account_id = env::current_account_id();
-
-        if current_account_id.to_string().ends_with(".testnet") {
-            return "usdt.fakes.testnet".parse().unwrap();
-        }
-
-        if current_account_id.to_string().ends_with(".near") {
-            return "usdt.near".parse().unwrap();
-        }
-
-        panic!("unknown network");
     }
 }
