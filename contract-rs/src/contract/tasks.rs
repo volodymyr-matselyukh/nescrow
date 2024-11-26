@@ -10,7 +10,7 @@ use crate::types::pagination::Pagination;
 use crate::types::task::Task;
 
 use super::{
-    Nescrow, NescrowExt, NESCROW_FREELANCER_FEE, NESCROW_OWNER_FEE,
+    Nescrow, NescrowExt, NESCROW_DISPUTE_RESOLUTION_FEE, NESCROW_FREELANCER_FEE, NESCROW_OWNER_FEE,
     USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
 };
 
@@ -19,19 +19,28 @@ use super::{
 impl Nescrow {
     // the task is created when the owner accepts the contractor
     #[payable]
-    pub fn create_task(&mut self, task_id: TaskId, contractor: AccountId, reward: UsdtBalance) {
+    pub fn create_task(
+        &mut self,
+        task_id: TaskId,
+        owner_username: String,
+        contractor: AccountId,
+        contractor_username: String,
+        reward: UsdtBalance,
+    ) {
         assert!(
             !self.tasks.contains_key(&task_id),
             "Taks has already been created"
         );
 
-        let task_owner = env::predecessor_account_id();
+        let task_owner_account_id = env::predecessor_account_id();
 
         let task = Task {
             task_id: task_id.clone(),
-            contractor: contractor.clone(),
-            owner: task_owner.clone(),
-            reward,
+            contractor_username,
+            contractor_account_id: contractor.clone(),
+            owner_username: owner_username.clone(),
+            owner_account_id: task_owner_account_id.clone(),
+            reward: reward.clone(),
             task_hash: None,
             signed_by_contractor_on: None,
             signed_by_owner_on: None,
@@ -46,7 +55,8 @@ impl Nescrow {
 
         self.tasks.insert(task_id.clone(), task);
 
-        let existing_tasks_per_owner_unwrapped = self.tasks_per_owner.get_mut(&task_owner);
+        let existing_tasks_per_owner_unwrapped =
+            self.tasks_per_owner.get_mut(&task_owner_account_id);
         if existing_tasks_per_owner_unwrapped.is_some() {
             existing_tasks_per_owner_unwrapped
                 .unwrap()
@@ -56,7 +66,7 @@ impl Nescrow {
             new_tasks_per_owner.insert(task_id.clone());
 
             self.tasks_per_owner
-                .insert(task_owner.clone(), new_tasks_per_owner);
+                .insert(task_owner_account_id.clone(), new_tasks_per_owner);
         }
 
         let existing_tasks_per_engineer_unwrapped = self.tasks_per_engineer.get_mut(&contractor);
@@ -80,6 +90,18 @@ impl Nescrow {
             NearToken::from_yoctonear(USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT)
         );
 
+        let withdrawable_amount =
+            self.get_withdrawable_amount_by_account(owner_username, task_owner_account_id.clone());
+
+        let task_reward_including_fees = Decimal::from(reward.0)
+            + Decimal::from(reward.0) * NESCROW_OWNER_FEE
+            + Decimal::from(reward.0) * NESCROW_DISPUTE_RESOLUTION_FEE;
+
+        assert!(
+            Decimal::from(withdrawable_amount.0) >= task_reward_including_fees,
+            "You have not enought deposit to cover the reward for this task."
+        );
+
         let refund = attached_deposit.as_yoctonear() - USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT;
 
         log!("Deposit to return {}", refund);
@@ -94,7 +116,7 @@ impl Nescrow {
 
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
 
-        if task_owner_account_id.clone() != task.owner {
+        if task_owner_account_id.clone() != task.owner_account_id {
             panic!("Operation forbidden. You must be an owner of the task");
         }
 
@@ -190,7 +212,7 @@ impl Nescrow {
         let task = self.tasks.remove(&task_id).expect("Task not found");
 
         assert_eq!(
-            task.owner, task_owner,
+            task.owner_account_id, task_owner,
             "Only task owner can remove the task"
         );
         assert!(
@@ -203,38 +225,24 @@ impl Nescrow {
         );
 
         self.tasks_per_owner.remove(&task_owner);
-        self.tasks_per_engineer.remove(&task.contractor);
+        self.tasks_per_engineer.remove(&task.contractor_account_id);
     }
 
     // the task is signed by owner when he is happy with the selected contractor and wants to proceed to work started
-    pub fn sign_task_as_owner(
-        &mut self,
-        owner_username: String,
-        task_id: TaskId,
-        task_hash: String,
-    ) {
+    pub fn sign_task_as_owner(&mut self, task_id: TaskId, task_hash: String) {
         assert!(self.tasks.contains_key(&task_id), "Taks does not exist");
 
         let task_owner_account_id = env::predecessor_account_id();
 
-        let withdrawable_amount =
-            self.get_withdrawable_amount_by_account(owner_username, task_owner_account_id.clone());
-
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
 
-        if task_owner_account_id.clone() != task.owner {
+        if task_owner_account_id.clone() != task.owner_account_id {
             panic!("Operation forbidden. You must be an owner of the task.");
         }
 
         assert!(
             task.signed_by_owner_on.is_none(),
             "Task is already signed by owner."
-        );
-
-        assert!(
-            Decimal::from(withdrawable_amount.0)
-                >= Decimal::from(task.reward.0) + Decimal::from(task.reward.0) * NESCROW_OWNER_FEE,
-            "You have not enought deposit to cover the reward for this task."
         );
 
         let is_hash_changed: bool = task.task_hash.is_some()
@@ -256,7 +264,7 @@ impl Nescrow {
 
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
 
-        if task_owner_account_id.clone() != task.owner {
+        if task_owner_account_id.clone() != task.owner_account_id {
             panic!("Operation forbidden. You must be an owner of the task");
         }
 
@@ -281,7 +289,7 @@ impl Nescrow {
 
         assert_eq!(
             task_contractor_account_id.clone(),
-            task.contractor,
+            task.contractor_account_id,
             "Task has different contractor"
         );
 
@@ -312,7 +320,7 @@ impl Nescrow {
 
         assert_eq!(
             task_contractor_id.clone(),
-            task.contractor,
+            task.contractor_account_id,
             "Task has different contractor."
         );
 
@@ -332,7 +340,7 @@ impl Nescrow {
 
         assert_eq!(
             task_owner_account_id.clone(),
-            task.owner,
+            task.owner_account_id,
             "Task has different owner."
         );
 
@@ -354,7 +362,7 @@ impl Nescrow {
 
         assert_eq!(
             task_contractor_account_id.clone(),
-            task.contractor,
+            task.contractor_account_id,
             "Task has different contractor."
         );
 

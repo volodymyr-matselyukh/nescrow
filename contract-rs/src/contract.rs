@@ -19,6 +19,7 @@ const USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT: u128 = NearToken::from_millinear
 
 const NESCROW_OWNER_FEE: Decimal = dec!(0.005);
 const NESCROW_FREELANCER_FEE: Decimal = dec!(0.005);
+const NESCROW_DISPUTE_RESOLUTION_FEE: Decimal = dec!(0.05);
 
 const NESCROW_BENEFICIARY_ACCOUNT_NAME: &str = "nescrow.testnet";
 

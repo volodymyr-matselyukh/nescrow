@@ -20,8 +20,16 @@ fn account_1() -> AccountId {
     AccountId::from_str("account_1.testnet").unwrap()
 }
 
+fn account_1_username() -> String {
+    String::from("account_1")
+}
+
 fn account_2() -> AccountId {
     AccountId::from_str("account_2.testnet").unwrap()
+}
+
+fn account_2_username() -> String {
+    String::from("account_2")
 }
 
 fn usdt_account() -> AccountId {

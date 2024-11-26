@@ -34,9 +34,9 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 `near contract call-function as-transaction ad-brick.testnet register_customer json-args '{"username": "witty"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as ad-brick.testnet network-config testnet sign-with-keychain send`
 
-# Read get_withdrawable_amount
+# Read get_deposit_by_username
 
-`near contract call-function as-read-only ad-brick.testnet get_withdrawable_amount json-args '{"sender_email": "vova@navirego.com", "account_id": "truthful-circle.testnet"}' network-config testnet now`
+`near contract call-function as-read-only ad-brick.testnet get_deposit_by_username json-args '{"sender_username": "vovik"}' network-config testnet now`
 
 # Read get_owners_tasks
 

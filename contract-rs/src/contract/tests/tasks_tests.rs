@@ -2,7 +2,10 @@ use near_sdk::{testing_env, NearToken};
 
 use crate::{
     contract::{
-        tests::{account_1, account_2, usdt_account, utils::setup, TEST_USERNAME},
+        tests::{
+            account_1, account_1_username, account_2, account_2_username, usdt_account,
+            utils::setup,
+        },
         USER_REGISTRATION_STORAGE_USAGE_DEPOSIT, USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
     },
     types::common_types::{UsdtBalance, UsdtBalanceExt},
@@ -29,6 +32,7 @@ fn test_create_task() {
     );
 
     let reward = 1000;
+    let deposit = 1055;
 
     testing_env!(context
         .attached_deposit(NearToken::from_yoctonear(
@@ -36,9 +40,23 @@ fn test_create_task() {
         ))
         .build());
 
+    contract.register_customer(account_1_username());
+
+    testing_env!(context.predecessor_account_id(usdt_account()).build());
+
+    contract.ft_on_transfer(
+        &account_1(),
+        UsdtBalance::from_usdt(deposit),
+        String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
+    );
+
+    testing_env!(context.predecessor_account_id(account_1()).build());
+
     contract.create_task(
         String::from(TASK_1_ID),
+        account_1_username(),
         account_2(),
+        account_2_username(),
         UsdtBalance::from_usdt(reward),
     );
 
@@ -67,6 +85,7 @@ fn test_remove_task() {
     const TASK_1_ID: &str = "task_1";
 
     let reward = 1000;
+    let deposit = 1055;
 
     testing_env!(context
         .attached_deposit(NearToken::from_yoctonear(
@@ -74,9 +93,23 @@ fn test_remove_task() {
         ))
         .build());
 
+    contract.register_customer(account_1_username());
+
+    testing_env!(context.predecessor_account_id(usdt_account()).build());
+
+    contract.ft_on_transfer(
+        &account_1(),
+        UsdtBalance::from_usdt(deposit),
+        String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
+    );
+
+    testing_env!(context.predecessor_account_id(account_1()).build());
+
     contract.create_task(
         String::from(TASK_1_ID),
+        account_1_username(),
         account_2(),
+        account_2_username(),
         UsdtBalance::from_usdt(reward),
     );
 
@@ -112,27 +145,29 @@ fn test_sign_task_as_owner() {
     const TASK_1_ID: &str = "task_1";
 
     let reward = 1000;
-    let reward_plus_owners_fee = 1005;
+    let reward_plus_owners_fee = 1055;
 
-    contract.create_task(
-        String::from(TASK_1_ID),
-        account_2(),
-        UsdtBalance::from_usdt(reward),
-    );
-
-    contract.register_customer(TEST_USERNAME.to_string());
+    contract.register_customer(account_1_username());
 
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
     contract.ft_on_transfer(
         &account_1(),
         UsdtBalance::from_usdt(reward_plus_owners_fee),
-        String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
+        String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
     testing_env!(context.predecessor_account_id(account_1()).build());
 
-    contract.sign_task_as_owner(TEST_USERNAME.to_string(), String::from(TASK_1_ID));
+    contract.create_task(
+        String::from(TASK_1_ID),
+        account_1_username(),
+        account_2(),
+        account_2_username(),
+        UsdtBalance::from_usdt(reward),
+    );
+
+    contract.sign_task_as_owner(TASK_1_ID.to_string(), String::from("hash"));
 
     let task_from_blockchain = contract.tasks.get(TASK_1_ID).expect("Task should exist");
     assert!(
@@ -143,7 +178,7 @@ fn test_sign_task_as_owner() {
 
 #[test]
 #[should_panic(expected = "Operation forbidden. You must be an owner of the task.")]
-fn test_sign_task_as_owner_wront_owner() {
+fn test_sign_task_as_owner_wrong_owner() {
     let (mut contract, mut context) = setup(None, Some(account_1()));
 
     testing_env!(context
@@ -155,25 +190,70 @@ fn test_sign_task_as_owner_wront_owner() {
     const TASK_1_ID: &str = "task_1";
 
     let reward = 1000;
-    let reward_plus_owners_fee = 1005;
+    let reward_plus_owners_fee = 1055;
 
-    contract.create_task(
-        String::from(TASK_1_ID),
-        account_2(),
-        UsdtBalance::from_usdt(reward),
-    );
-
-    contract.register_customer(TEST_USERNAME.to_string());
+    contract.register_customer(account_1_username());
 
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
     contract.ft_on_transfer(
         &account_1(),
         UsdtBalance::from_usdt(reward_plus_owners_fee),
-        String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
+        String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
+    );
+
+    testing_env!(context.predecessor_account_id(account_1()).build());
+
+    contract.create_task(
+        String::from(TASK_1_ID),
+        account_1_username(),
+        account_2(),
+        account_2_username(),
+        UsdtBalance::from_usdt(reward),
     );
 
     testing_env!(context.predecessor_account_id(account_2()).build());
 
-    contract.sign_task_as_owner(TEST_USERNAME.to_string(), String::from(TASK_1_ID));
+    contract.sign_task_as_owner(TASK_1_ID.to_string(), String::from(TASK_1_ID));
+}
+
+#[test]
+#[should_panic(expected = "You have not enought deposit to cover the reward for this task.")]
+fn test_create_task_with_not_enough_deposit() {
+    let (mut contract, mut context) = setup(None, Some(account_1()));
+
+    testing_env!(context
+        .attached_deposit(NearToken::from_yoctonear(
+            USER_REGISTRATION_STORAGE_USAGE_DEPOSIT
+        ))
+        .build());
+
+    const TASK_1_ID: &str = "task_1";
+
+    let reward = 1000;
+    let reward_plus_owners_fee = 1054; // 1000 + 1000 * 0.05(dispute reservation) + 1000 * 0.01(nescrow fee) - 1(to make code throw an exception)
+
+    contract.register_customer(account_1_username());
+
+    testing_env!(context.predecessor_account_id(usdt_account()).build());
+
+    contract.ft_on_transfer(
+        &account_1(),
+        UsdtBalance::from_usdt(reward_plus_owners_fee),
+        String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
+    );
+
+    testing_env!(context.predecessor_account_id(account_1()).build());
+
+    contract.create_task(
+        String::from(TASK_1_ID),
+        account_1_username(),
+        account_2(),
+        account_2_username(),
+        UsdtBalance::from_usdt(reward),
+    );
+
+    testing_env!(context.predecessor_account_id(account_2()).build());
+
+    contract.sign_task_as_owner(TASK_1_ID.to_string(), String::from(TASK_1_ID));
 }
