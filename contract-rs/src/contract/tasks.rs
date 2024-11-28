@@ -1,8 +1,7 @@
 use std::collections::HashSet;
-use std::ops::{Add, Deref};
+use std::ops::Add;
 
 use near_sdk::env::block_timestamp_ms;
-use near_sdk::json_types::U128;
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
@@ -10,12 +9,12 @@ use rust_decimal::Decimal;
 use crate::contract::utils::{
     get_dispute_resolution_amount, get_nescrow_beneficiary_contract, get_usdt_contract,
 };
-use crate::types::common_types::{TaskId, UsdtBalance, UsdtBalanceExt};
+use crate::types::common_types::{TaskId, UsdtBalance};
 use crate::types::pagination::Pagination;
 use crate::types::task::Task;
 
 use super::{
-    Nescrow, NescrowExt, NESCROW_BENEFICIARY_ACCOUNT_NAME, NESCROW_BENEFICIARY_USERNAME,
+    Nescrow, NescrowExt, NESCROW_BENEFICIARY_USERNAME,
     NESCROW_DISPUTE_RESOLUTION_FEE, NESCROW_FREELANCER_FEE, NESCROW_OWNER_FEE,
     USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
 };

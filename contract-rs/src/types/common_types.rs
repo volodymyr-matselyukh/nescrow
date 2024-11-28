@@ -12,7 +12,7 @@ pub trait UsdtBalanceExt {
     fn from_usdt(amount: u128) -> U128;
     fn to_usdt(amount: U128) -> U128;
     fn from_decimal(decimal: Decimal) -> UsdtBalance;
-    fn to_decimal(amount: U128) -> Decimal;
+    // fn to_decimal(amount: U128) -> Decimal;
 }
 
 impl UsdtBalanceExt for U128 {
@@ -42,7 +42,7 @@ impl UsdtBalanceExt for U128 {
     }
 
     // converts to human money
-    fn to_decimal(usdt_amount: UsdtBalance) -> Decimal {
-        Decimal::from(usdt_amount.0 / USDT_DIGITS)
-    }
+    // fn to_decimal(usdt_amount: UsdtBalance) -> Decimal {
+    //     Decimal::from(usdt_amount.0 / USDT_DIGITS)
+    // }
 }
