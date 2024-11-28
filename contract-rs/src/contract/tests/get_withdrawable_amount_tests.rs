@@ -19,7 +19,7 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
     let usdt_deposit_from_wallet_1 = UsdtBalance::from_usdt(100);
     let usdt_deposit_from_wallet_2 = UsdtBalance::from_usdt(330);
 
-    contract.register_customer(TEST_USERNAME.to_string());
+    contract.register_customer(TEST_USERNAME.to_string(), account_1());
 
     contract.ft_on_transfer(
         &account_1(),

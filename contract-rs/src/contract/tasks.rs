@@ -1,16 +1,22 @@
 use std::collections::HashSet;
+use std::ops::{Add, Deref};
 
 use near_sdk::env::block_timestamp_ms;
+use near_sdk::json_types::U128;
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise};
+use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 
-use crate::contract::utils::{get_nescrow_beneficiary_contract, get_usdt_contract};
-use crate::types::common_types::{TaskId, UsdtBalance};
+use crate::contract::utils::{
+    get_dispute_resolution_amount, get_nescrow_beneficiary_contract, get_usdt_contract,
+};
+use crate::types::common_types::{TaskId, UsdtBalance, UsdtBalanceExt};
 use crate::types::pagination::Pagination;
 use crate::types::task::Task;
 
 use super::{
-    Nescrow, NescrowExt, NESCROW_DISPUTE_RESOLUTION_FEE, NESCROW_FREELANCER_FEE, NESCROW_OWNER_FEE,
+    Nescrow, NescrowExt, NESCROW_BENEFICIARY_ACCOUNT_NAME, NESCROW_BENEFICIARY_USERNAME,
+    NESCROW_DISPUTE_RESOLUTION_FEE, NESCROW_FREELANCER_FEE, NESCROW_OWNER_FEE,
     USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
 };
 
@@ -33,6 +39,9 @@ impl Nescrow {
         );
 
         let task_owner_account_id = env::predecessor_account_id();
+
+        let withdrawable_amount =
+            self.get_withdrawable_amount_by_account(owner_username.clone(), task_owner_account_id.clone());
 
         let task = Task {
             task_id: task_id.clone(),
@@ -89,9 +98,6 @@ impl Nescrow {
             "Attached deposit should be >= {} for task creation on blockchain",
             NearToken::from_yoctonear(USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT)
         );
-
-        let withdrawable_amount =
-            self.get_withdrawable_amount_by_account(owner_username, task_owner_account_id.clone());
 
         let task_reward_including_fees = Decimal::from(reward.0)
             + Decimal::from(reward.0) * NESCROW_OWNER_FEE
@@ -350,6 +356,58 @@ impl Nescrow {
             task.submitted_by_contractor_on.is_some(),
             "Work should be submitted first."
         );
+
+        // handle candidate deposit
+        let candidate_deposit = self
+            .deposits
+            .get_mut(&task.contractor_username)
+            .expect("Candidate is not registered");
+
+        let candidate_account_deposit = candidate_deposit
+            .get_mut(&task.contractor_account_id.clone())
+            .expect("Candidate account not found");
+
+        let nescrow_felancer_fee = Decimal::from(task.reward.0) * NESCROW_FREELANCER_FEE;
+        let candidate_reward_without_nescrow_fee = Decimal::from(task.reward.0)
+            .add(-nescrow_felancer_fee)
+            .to_u128();
+
+        let candidate_new_deposit = candidate_account_deposit
+            .0
+            .add(candidate_reward_without_nescrow_fee.unwrap());
+
+        candidate_account_deposit.0 = candidate_new_deposit;
+
+        // handle owner deposit
+        let nescrow_owner_fee = Decimal::from(task.reward.0) * NESCROW_OWNER_FEE;
+        let dispute_resolution_amount = get_dispute_resolution_amount(task.reward);
+
+        let owner_deposit = self
+            .deposits
+            .get_mut(&task.owner_username.clone())
+            .expect("Owner is not registered");
+
+        let owner_account_deposit = owner_deposit
+            .get_mut(&task.owner_account_id.clone())
+            .expect("Owner account not found");
+
+        owner_account_deposit.0 = owner_account_deposit.0.add(dispute_resolution_amount.0);
+
+        // handle nescrow deposit
+        let nescrow_earnings = nescrow_owner_fee.add(nescrow_felancer_fee);
+
+        let nescrow_deposit = self
+            .deposits
+            .get_mut(NESCROW_BENEFICIARY_USERNAME)
+            .expect("Nescrow is not registered");
+
+        let nescrow_account_deposit = nescrow_deposit
+            .get_mut(&get_nescrow_beneficiary_contract())
+            .expect("Owner account not found");
+
+        nescrow_account_deposit.0 = nescrow_account_deposit
+            .0
+            .add(nescrow_earnings.to_u128().unwrap());
 
         task.approved_on = Some(block_timestamp_ms());
         task.completion_percentage = Some(100);

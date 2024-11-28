@@ -18,7 +18,7 @@ fn test_ft_on_transfer() {
 
     let usdt_deposit = UsdtBalance::from_usdt(1);
 
-    contract.register_customer(TEST_USERNAME.to_string());
+    contract.register_customer(TEST_USERNAME.to_string(), account_1());
 
     contract.ft_on_transfer(
         &account_1(),
@@ -43,7 +43,7 @@ fn test_ft_on_transfer_multiple_wallets() {
 
     let usdt_deposit = UsdtBalance::from_usdt(1);
 
-    contract.register_customer(TEST_USERNAME.to_string());
+    contract.register_customer(TEST_USERNAME.to_string(),account_1());
 
     contract.ft_on_transfer(
         &account_1(),

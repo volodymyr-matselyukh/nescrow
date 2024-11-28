@@ -1,6 +1,6 @@
 use near_sdk::{testing_env, NearToken};
 
-use crate::{contract::tests::TEST_USERNAME, contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT};
+use crate::contract::{tests::{account_1, TEST_USERNAME}, USER_REGISTRATION_STORAGE_USAGE_DEPOSIT};
 
 use super::utils::setup;
 
@@ -18,7 +18,7 @@ fn test_register_account() {
             USER_REGISTRATION_STORAGE_USAGE_DEPOSIT
         ))
         .build());
-    contract.register_customer(TEST_USERNAME.to_string());
+    contract.register_customer(TEST_USERNAME.to_string(), account_1());
 
     assert!(
         contract.deposits.get(TEST_USERNAME).is_some(),

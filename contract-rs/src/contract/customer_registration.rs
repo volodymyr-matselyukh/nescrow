@@ -1,5 +1,6 @@
+use near_sdk::json_types::U128;
 use near_sdk::store::IterableMap;
-use near_sdk::{env, log, near, NearToken, Promise};
+use near_sdk::{env, log, near, AccountId, NearToken, Promise};
 use crate::contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT;
 use crate::enums::storage_keys::StorageKeys;
 use super::{NescrowExt, Nescrow};
@@ -8,7 +9,7 @@ use super::{NescrowExt, Nescrow};
 #[allow(dead_code)]
 impl Nescrow {
     #[payable]
-    pub fn register_customer(&mut self, username: String) {
+    pub fn register_customer(&mut self, username: String, account_id: AccountId) {
         if String::is_empty(&username) {
             panic!("Username should be provided");
         }
@@ -19,7 +20,8 @@ impl Nescrow {
 
         let username_hash = env::sha256_array(&username.as_bytes());
 
-        let account_balance_map = IterableMap::new(StorageKeys::AccountBalance { username_hash });
+        let mut account_balance_map = IterableMap::new(StorageKeys::AccountBalance { username_hash });
+        account_balance_map.insert(account_id, U128(0));
 
         self.deposits.insert(username, account_balance_map);
 

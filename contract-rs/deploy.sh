@@ -22,7 +22,7 @@ fi
 
 ./build.sh
 
-near contract deploy ad-brick.testnet use-file ./target/wasm32-unknown-unknown/release/nescrow.wasm without-init-call network-config testnet sign-with-keychain send
+near contract deploy macho-metal.testnet use-file ./target/wasm32-unknown-unknown/release/nescrow.wasm without-init-call network-config testnet sign-with-keychain send
 
 
 if [[ 
@@ -33,9 +33,9 @@ if [[
 
     echo "----------------Initializing the contract----------------"
 
-    near contract call-function as-transaction ad-brick.testnet new json-args {} prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as ad-brick.testnet network-config testnet sign-with-keychain send
+    near contract call-function as-transaction macho-metal.testnet new json-args {} prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as macho-metal.testnet network-config testnet sign-with-keychain send
 
     echo "----------------Registering contract in usdt.fakes.testnet----------------"
 
-    near contract call-function as-transaction usdt.fakes.testnet storage_deposit json-args '{"account_id": "ad-brick.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as ad-brick.testnet network-config testnet sign-with-keychain send
+    near contract call-function as-transaction usdt.fakes.testnet storage_deposit json-args '{"account_id": "macho-metal.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as macho-metal.testnet network-config testnet sign-with-keychain send
 fi

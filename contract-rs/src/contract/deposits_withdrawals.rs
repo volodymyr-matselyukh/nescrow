@@ -1,11 +1,14 @@
+use std::ops::{Add, Sub};
+
 use near_sdk::json_types::U128;
 use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError};
+use rust_decimal::prelude::ToPrimitive;
 
+use super::utils::{get_task_reserverd_amount, get_usdt_contract};
 use crate::enums::storage_keys::StorageKeys;
 use crate::types::common_types::{UsdtBalance, UsdtBalanceExt};
 use crate::types::ft_transfer_message::FtOnTransferMessage;
-use super::utils::get_usdt_contract;
 
 use super::{Nescrow, NescrowExt};
 
@@ -53,9 +56,34 @@ impl Nescrow {
 
         let account_deposit = deposits.get(&account_id);
 
+        let mut tasks_rewards_sum: u128 = 0;
+
+        let sender_tasks = self.tasks_per_owner.get(&account_id);
+
+        if sender_tasks.is_some() {
+            let unwrapped_tasks = sender_tasks.unwrap();
+
+            if unwrapped_tasks.len() > 0 {
+                unwrapped_tasks.iter().for_each(|task_id| {
+                    let task = self.tasks.get(task_id);
+
+                    if task.is_none() {
+                        return;
+                    }
+
+                    let task_unwrapped = task.unwrap();
+
+                    let task_reward_with_fees = get_task_reserverd_amount(task_unwrapped);
+
+                    tasks_rewards_sum =
+                        tasks_rewards_sum.add(task_reward_with_fees.to_u128().unwrap());
+                });
+            }
+        }
+
         match account_deposit {
             None => return UsdtBalance::from(0),
-            Some(deposit) => return deposit.clone(),
+            Some(deposit) => return U128(deposit.clone().0.sub(tasks_rewards_sum)),
         };
     }
 
@@ -87,15 +115,11 @@ impl Nescrow {
             .get_mut(&sender_username)
             .expect("Customer is not registered. Register the customer first.");
 
-        let ammount_to_add: u128 = amount.into();
-
         let existing_deposit = sender_deposits.get(sender_id);
 
         match existing_deposit {
             None => sender_deposits.insert(sender_id.clone(), amount),
-            Some(balance) => {
-                sender_deposits.insert(sender_id.clone(), U128(balance.0 + ammount_to_add))
-            }
+            Some(balance) => sender_deposits.insert(sender_id.clone(), U128(balance.0 + amount.0)),
         };
 
         return U128(0);

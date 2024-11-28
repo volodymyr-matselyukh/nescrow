@@ -22,6 +22,7 @@ const NESCROW_FREELANCER_FEE: Decimal = dec!(0.005);
 const NESCROW_DISPUTE_RESOLUTION_FEE: Decimal = dec!(0.05);
 
 const NESCROW_BENEFICIARY_ACCOUNT_NAME: &str = "nescrow.testnet";
+const NESCROW_BENEFICIARY_USERNAME: &str = "nescrow";
 
 #[near(contract_state)]
 pub struct Nescrow {
