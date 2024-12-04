@@ -38,7 +38,7 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 # Read get_withdrawable_amount_by_account
 
-`near contract call-function as-read-only macho-metal.testnet get_withdrawable_amount_by_account json-args '{"sender_username": "vovik"}' network-config testnet now`
+`near contract call-function as-read-only macho-metal.testnet get_withdrawable_amount_by_account json-args '{"sender_username": "nescrow", "account_id": "nescrow.testnet"}' network-config testnet now`
 
 # Read get_owners_tasks
 
@@ -46,7 +46,7 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 # Read get_task
 
-`near contract call-function as-read-only macho-metal.testnet get_task json-args '{"task_id": "aa32f1aa-5016-4461-afb8-c8d754e211a6"}' network-config testnet now`
+`near contract call-function as-read-only macho-metal.testnet get_task json-args '{"task_id": "60847862-9533-4318-acd9-c580356ecd6b"}' network-config testnet now`
 
 # Call reset_claim
 

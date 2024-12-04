@@ -37,8 +37,11 @@ impl Nescrow {
 
         let mut total_balance: u128 = 0;
 
-        deposits.iter().for_each(|(_, &balance)| {
+        deposits.iter().for_each(|(account_id, &balance)| {
+            let reserved_ammount = self.get_reserved_deposit_by_tasks(account_id.clone());
+
             total_balance += balance.0;
+            total_balance = total_balance.sub(reserved_ammount);
         });
 
         return U128(total_balance);
@@ -56,6 +59,15 @@ impl Nescrow {
 
         let account_deposit = deposits.get(&account_id);
 
+        let tasks_rewards_sum: u128 = self.get_reserved_deposit_by_tasks(account_id);
+
+        match account_deposit {
+            None => return UsdtBalance::from(0),
+            Some(deposit) => return U128(deposit.clone().0.sub(tasks_rewards_sum)),
+        };
+    }
+
+    fn get_reserved_deposit_by_tasks(&self, account_id: AccountId) -> u128 {
         let mut tasks_rewards_sum: u128 = 0;
 
         let sender_tasks = self.tasks_per_owner.get(&account_id);
@@ -81,10 +93,7 @@ impl Nescrow {
             }
         }
 
-        match account_deposit {
-            None => return UsdtBalance::from(0),
-            Some(deposit) => return U128(deposit.clone().0.sub(tasks_rewards_sum)),
-        };
+        return tasks_rewards_sum;
     }
 
     pub fn ft_on_transfer(

@@ -7,7 +7,7 @@ use crate::{
             utils::setup,
         },
         utils::get_nescrow_beneficiary_contract,
-        NESCROW_BENEFICIARY_ACCOUNT_NAME, NESCROW_BENEFICIARY_USERNAME,
+        NESCROW_BENEFICIARY_USERNAME,
         USER_REGISTRATION_STORAGE_USAGE_DEPOSIT, USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
     },
     types::common_types::{UsdtBalance, UsdtBalanceExt},
