@@ -1,6 +1,6 @@
-use near_sdk::json_types::U128;
 use near_sdk::store::IterableMap;
 use near_sdk::{env, log, near, AccountId, NearToken, Promise};
+use rust_decimal_macros::dec;
 use crate::contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT;
 use crate::enums::storage_keys::StorageKeys;
 use super::{NescrowExt, Nescrow};
@@ -21,7 +21,7 @@ impl Nescrow {
         let username_hash = env::sha256_array(&username.as_bytes());
 
         let mut account_balance_map = IterableMap::new(StorageKeys::AccountBalance { username_hash });
-        account_balance_map.insert(account_id, U128(0));
+        account_balance_map.insert(account_id, dec!(0));
 
         self.deposits.insert(username, account_balance_map);
 

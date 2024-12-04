@@ -9,8 +9,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 near-sdk = { version = "5.5.0", features = ["unit-testing"] }
-borsh = "1.5.1"
-rust_decimal = "1.36"
+borsh = "1.5.3"
+rust_decimal = {version = "1.36", features = ["borsh"]} 
 rust_decimal_macros = "1.36"
 
 [profile.dev]

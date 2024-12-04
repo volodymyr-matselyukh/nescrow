@@ -98,12 +98,12 @@ impl Nescrow {
             NearToken::from_yoctonear(USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT)
         );
 
-        let task_reward_including_fees = Decimal::from(reward.0)
-            + Decimal::from(reward.0) * NESCROW_OWNER_FEE
-            + Decimal::from(reward.0) * NESCROW_DISPUTE_RESOLUTION_FEE;
+        let task_reward_including_fees = reward
+            + reward * NESCROW_OWNER_FEE
+            + reward * NESCROW_DISPUTE_RESOLUTION_FEE;
 
         assert!(
-            Decimal::from(withdrawable_amount.0) >= task_reward_including_fees,
+            withdrawable_amount >= task_reward_including_fees,
             "You have not enought deposit to cover the reward for this task."
         );
 
@@ -366,19 +366,17 @@ impl Nescrow {
             .get_mut(&task.contractor_account_id.clone())
             .expect("Candidate account not found");
 
-        let nescrow_felancer_fee = Decimal::from(task.reward.0) * NESCROW_FREELANCER_FEE;
-        let candidate_reward_without_nescrow_fee = Decimal::from(task.reward.0)
-            .add(-nescrow_felancer_fee)
-            .to_u128();
+        let nescrow_felancer_fee = task.reward * NESCROW_FREELANCER_FEE;
+        let candidate_reward_without_nescrow_fee = task.reward
+            .add(-nescrow_felancer_fee);
 
         let candidate_new_deposit = candidate_account_deposit
-            .0
-            .add(candidate_reward_without_nescrow_fee.unwrap());
+            .add(candidate_reward_without_nescrow_fee);
 
-        candidate_account_deposit.0 = candidate_new_deposit;
+        *candidate_account_deposit = candidate_new_deposit;
 
         // handle owner deposit
-        let nescrow_owner_fee = Decimal::from(task.reward.0) * NESCROW_OWNER_FEE;
+        let nescrow_owner_fee = task.reward * NESCROW_OWNER_FEE;
         let dispute_resolution_amount = get_dispute_resolution_amount(task.reward);
 
         let owner_deposit = self
@@ -390,7 +388,7 @@ impl Nescrow {
             .get_mut(&task.owner_account_id.clone())
             .expect("Owner account not found");
 
-        owner_account_deposit.0 = owner_account_deposit.0.add(dispute_resolution_amount.0);
+        *owner_account_deposit = (*owner_account_deposit).add(dispute_resolution_amount);
 
         // handle nescrow deposit
         let nescrow_earnings = nescrow_owner_fee.add(nescrow_felancer_fee);
@@ -404,9 +402,8 @@ impl Nescrow {
             .get_mut(&get_nescrow_beneficiary_contract())
             .expect("Owner account not found");
 
-        nescrow_account_deposit.0 = nescrow_account_deposit
-            .0
-            .add(nescrow_earnings.to_u128().unwrap());
+        *nescrow_account_deposit = (*nescrow_account_deposit)
+            .add(nescrow_earnings);
 
         task.approved_on = Some(block_timestamp_ms());
         task.completion_percentage = Some(100);
@@ -429,11 +426,11 @@ impl Nescrow {
             "Task completion percantage is undefined."
         );
 
-        let nescrow_felancer_fee = Decimal::from(task.reward.0) * NESCROW_FREELANCER_FEE;
-        let nescrow_owner_fee = Decimal::from(task.reward.0) * NESCROW_OWNER_FEE;
+        let nescrow_felancer_fee = task.reward * NESCROW_FREELANCER_FEE;
+        let nescrow_owner_fee = task.reward * NESCROW_OWNER_FEE;
 
         let amount_to_claim =
-            Decimal::from((task.completion_percentage.unwrap() / 100) as u128 * task.reward.0)
+            Decimal::from(task.completion_percentage.unwrap() / 100) * task.reward
                 - nescrow_felancer_fee;
 
         let usdt_contract_id = get_usdt_contract();

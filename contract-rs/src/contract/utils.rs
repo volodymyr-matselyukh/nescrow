@@ -29,15 +29,13 @@ pub fn get_nescrow_beneficiary_contract() -> AccountId {
 pub fn get_dispute_resolution_amount(reward: UsdtBalance) -> UsdtBalance {
     let human_money_reward = UsdtBalance::to_usdt(reward);
 
-    return UsdtBalance::from_decimal(
-        NESCROW_DISPUTE_RESOLUTION_FEE * Decimal::from(human_money_reward.0),
-    );
+    return NESCROW_DISPUTE_RESOLUTION_FEE * Decimal::from(human_money_reward.0);
 }
 
 pub fn get_task_reserverd_amount(task: &Task) -> Decimal {
-    let task_reward_with_fees = Decimal::from(task.reward.0)
-        + Decimal::from(task.reward.0) * NESCROW_OWNER_FEE
-        + Decimal::from(task.reward.0) * NESCROW_DISPUTE_RESOLUTION_FEE;
+    let task_reward_with_fees = task.reward
+        + task.reward * NESCROW_OWNER_FEE
+        + task.reward * NESCROW_DISPUTE_RESOLUTION_FEE;
 
     return task_reward_with_fees;
 }

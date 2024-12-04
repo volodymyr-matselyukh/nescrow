@@ -1,4 +1,5 @@
 use near_sdk::{json_types::U128, testing_env, NearToken};
+use rust_decimal_macros::dec;
 
 use crate::{
     contract::{
@@ -303,7 +304,7 @@ fn test_deposits_assigned_correctly_after_task_approval() {
     let owner_deposit =
         contract.get_withdrawable_amount_by_account(account_1_username(), account_1());
 
-    assert_eq!(owner_deposit, U128(0), "Owner deposit should be zero");
+    assert_eq!(owner_deposit, dec!(0), "Owner deposit should be zero");
 
     contract.sign_task_as_owner(TASK_1_ID.to_string(), String::from(TASK_1_ID));
 

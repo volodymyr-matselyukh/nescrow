@@ -1,9 +1,12 @@
+use std::borrow::Borrow;
 use std::ops::{Add, Sub};
 
 use near_sdk::json_types::U128;
 use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError};
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 
 use super::utils::{get_task_reserverd_amount, get_usdt_contract};
 use crate::enums::storage_keys::StorageKeys;
@@ -35,16 +38,16 @@ impl Nescrow {
             .get(&sender_username)
             .unwrap_or_else(|| panic!("Username not registered"));
 
-        let mut total_balance: u128 = 0;
+        let mut total_balance = dec!(0);
 
         deposits.iter().for_each(|(account_id, &balance)| {
             let reserved_ammount = self.get_reserved_deposit_by_tasks(account_id.clone());
 
-            total_balance += balance.0;
+            total_balance += balance;
             total_balance = total_balance.sub(reserved_ammount);
         });
 
-        return U128(total_balance);
+        return total_balance;
     }
 
     pub fn get_withdrawable_amount_by_account(
@@ -59,16 +62,16 @@ impl Nescrow {
 
         let account_deposit = deposits.get(&account_id);
 
-        let tasks_rewards_sum: u128 = self.get_reserved_deposit_by_tasks(account_id);
+        let tasks_rewards_sum = self.get_reserved_deposit_by_tasks(account_id);
 
         match account_deposit {
             None => return UsdtBalance::from(0),
-            Some(deposit) => return U128(deposit.clone().0.sub(tasks_rewards_sum)),
+            Some(deposit) => return deposit.clone().sub(tasks_rewards_sum),
         };
     }
 
-    fn get_reserved_deposit_by_tasks(&self, account_id: AccountId) -> u128 {
-        let mut tasks_rewards_sum: u128 = 0;
+    fn get_reserved_deposit_by_tasks(&self, account_id: AccountId) -> Decimal {
+        let mut tasks_rewards_sum = dec!(0);
 
         let sender_tasks = self.tasks_per_owner.get(&account_id);
 
@@ -88,7 +91,7 @@ impl Nescrow {
                     let task_reward_with_fees = get_task_reserverd_amount(task_unwrapped);
 
                     tasks_rewards_sum =
-                        tasks_rewards_sum.add(task_reward_with_fees.to_u128().unwrap());
+                        tasks_rewards_sum.add(task_reward_with_fees);
                 });
             }
         }
@@ -128,10 +131,10 @@ impl Nescrow {
 
         match existing_deposit {
             None => sender_deposits.insert(sender_id.clone(), amount),
-            Some(balance) => sender_deposits.insert(sender_id.clone(), U128(balance.0 + amount.0)),
+            Some(balance) => sender_deposits.insert(sender_id.clone(), balance + amount),
         };
 
-        return U128(0);
+        return dec!(0);
     }
 
     pub fn withdraw(&self, receiver_username: String, amount: UsdtBalance) -> Promise {
@@ -146,12 +149,12 @@ impl Nescrow {
             receiver_account_id.clone(),
         );
 
-        assert!(withdrawable_amount.0 > 0, "Nothing to withdraw");
+        assert!(withdrawable_amount > dec!(0), "Nothing to withdraw");
 
-        assert!(amount.0 > 0, "Amount should be positive value");
+        assert!(amount > dec!(0), "Amount should be positive value");
 
         assert!(
-            amount.0 <= withdrawable_amount.0,
+            amount <= withdrawable_amount,
             "Max withdraw is {:#?}",
             UsdtBalance::to_usdt(withdrawable_amount)
         );
@@ -161,7 +164,7 @@ impl Nescrow {
         let ft_transfer_promise = Promise::new(usdt_contract_id).function_call(
             "ft_transfer".to_string(),
             near_sdk::serde_json::json!({
-                "amount": amount.0.to_string(),
+                "amount": amount.to_string(),
                 "receiver_id": receiver_account_id.clone(),
             })
             .to_string()
@@ -195,20 +198,20 @@ impl Nescrow {
             .get_mut(&receiver_username)
             .expect("Customer is not registered. Register the customer first.");
 
-        let ammount_to_deduct: u128 = amount.into();
+        let ammount_to_deduct = amount.borrow();
 
         let existing_deposit = sender_deposits
             .get(&receiver_account_id)
             .unwrap_or_else(|| panic!("Deposit doesn't exist"));
 
         assert!(
-            existing_deposit.0 >= ammount_to_deduct,
+            existing_deposit >= ammount_to_deduct,
             "Amount to deduct is bigger then deposit"
         );
 
         sender_deposits.insert(
             receiver_account_id.clone(),
-            U128(existing_deposit.0 - ammount_to_deduct),
+            existing_deposit - ammount_to_deduct,
         );
     }
 }

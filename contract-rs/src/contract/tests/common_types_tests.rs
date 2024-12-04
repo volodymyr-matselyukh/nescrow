@@ -11,7 +11,7 @@ fn test_decimal_to_usdt_balance() {
 
     assert_eq!(decimal_amount, Decimal::new(3456, 2), "Decimals should match");
 
-    let usdt = UsdtBalance::from_decimal(decimal_amount);
+    let usdt = UsdtBalance::to_usdt(decimal_amount);
 
     assert_eq!(usdt, U128(34_560_000), "Decimals should match");
 }
