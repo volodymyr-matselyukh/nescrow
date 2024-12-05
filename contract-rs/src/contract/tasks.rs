@@ -3,7 +3,6 @@ use std::ops::Add;
 
 use near_sdk::env::block_timestamp_ms;
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise};
-use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 
 use crate::contract::utils::{

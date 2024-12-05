@@ -1,10 +1,8 @@
 use std::borrow::Borrow;
 use std::ops::{Add, Sub};
 
-use near_sdk::json_types::U128;
 use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError};
-use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 

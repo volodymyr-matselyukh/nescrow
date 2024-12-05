@@ -233,8 +233,8 @@ fn test_create_task_with_not_enough_deposit() {
 
     const TASK_1_ID: &str = "task_1";
 
-    let reward = 1000;
-    let reward_plus_owners_fee = 1054; // 1000 + 1000 * 0.05(dispute reservation) + 1000 * 0.01(nescrow fee) - 1(to make code throw an exception)
+    let reward = dec!(1000);
+    let reward_plus_owners_fee = dec!(1054); // 1000 + 1000 * 0.05(dispute reservation) + 1000 * 0.01(nescrow fee) - 1(to make code throw an exception)
 
     contract.register_customer(account_1_username(), account_1());
 
@@ -242,7 +242,7 @@ fn test_create_task_with_not_enough_deposit() {
 
     contract.ft_on_transfer(
         &account_1(),
-        UsdtBalance::from_usdt(reward_plus_owners_fee),
+        reward_plus_owners_fee,
         String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
@@ -253,7 +253,7 @@ fn test_create_task_with_not_enough_deposit() {
         account_1_username(),
         account_2(),
         account_2_username(),
-        UsdtBalance::from_usdt(reward),
+        reward,
     );
 
     testing_env!(context.predecessor_account_id(account_2()).build());
