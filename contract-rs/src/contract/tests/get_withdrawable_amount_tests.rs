@@ -1,4 +1,5 @@
 use near_sdk::{testing_env, NearToken};
+use rust_decimal_macros::dec;
 
 use crate::{
     contract::{tests::{account_1, account_1_username, account_2, account_2_username, usdt_account, utils::setup, TEST_USERNAME}, USER_REGISTRATION_STORAGE_USAGE_DEPOSIT},
@@ -15,8 +16,11 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
         ))
         .build());
 
-    let usdt_deposit_from_wallet_1 = UsdtBalance::from_usdt(100);
-    let usdt_deposit_from_wallet_2 = UsdtBalance::from_usdt(330);
+    let human_deposit_from_wallet_1 = dec!(100);
+    let human_deposit_from_wallet_2 = dec!(330);
+
+    let usdt_deposit_from_wallet_1 = UsdtBalance::from_human_to_usdt(human_deposit_from_wallet_1);
+    let usdt_deposit_from_wallet_2 = UsdtBalance::from_human_to_usdt(human_deposit_from_wallet_2);
 
     contract.register_customer(TEST_USERNAME.to_string(), account_1());
 
@@ -36,7 +40,7 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
         contract.get_withdrawable_amount_by_account(String::from(TEST_USERNAME), account_1());
 
     assert_eq!(
-        withdrawable_amount_for_wallet_1, usdt_deposit_from_wallet_1,
+        withdrawable_amount_for_wallet_1, human_deposit_from_wallet_1,
         "Withdrawable amounts for wallet 1 should match"
     );
 
@@ -44,7 +48,7 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
         contract.get_withdrawable_amount_by_account(String::from(TEST_USERNAME), account_2());
 
     assert_eq!(
-        withdrawable_amount_for_wallet_2, usdt_deposit_from_wallet_2,
+        withdrawable_amount_for_wallet_2, human_deposit_from_wallet_2,
         "Withdrawable amounts for wallet 2 should match"
     );
 }

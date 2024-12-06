@@ -97,6 +97,7 @@ impl Nescrow {
         return tasks_rewards_sum;
     }
 
+    // called by USDT contract
     pub fn ft_on_transfer(
         &mut self,
         sender_id: &AccountId,
@@ -110,6 +111,8 @@ impl Nescrow {
         }
 
         log!("ft_on_transfer called {} {:?} {}", sender_id, amount, msg);
+
+        let nescrow_ammount = UsdtBalance::from_usdt_to_human(amount);
 
         let parsed_message_result: Result<FtOnTransferMessage, near_sdk::serde_json::Error> =
             near_sdk::serde_json::from_str(&msg);
@@ -128,8 +131,8 @@ impl Nescrow {
         let existing_deposit = sender_deposits.get(sender_id);
 
         match existing_deposit {
-            None => sender_deposits.insert(sender_id.clone(), amount),
-            Some(balance) => sender_deposits.insert(sender_id.clone(), balance + amount),
+            None => sender_deposits.insert(sender_id.clone(), nescrow_ammount),
+            Some(balance) => sender_deposits.insert(sender_id.clone(), balance + nescrow_ammount),
         };
 
         return dec!(0);
@@ -154,7 +157,7 @@ impl Nescrow {
         assert!(
             amount <= withdrawable_amount,
             "Max withdraw is {:#?}",
-            UsdtBalance::to_usdt(withdrawable_amount)
+            withdrawable_amount
         );
 
         let usdt_contract_id = get_usdt_contract();
@@ -162,7 +165,7 @@ impl Nescrow {
         let ft_transfer_promise = Promise::new(usdt_contract_id).function_call(
             "ft_transfer".to_string(),
             near_sdk::serde_json::json!({
-                "amount": amount.to_string(),
+                "amount": UsdtBalance::from_human_to_usdt(amount).to_string(),
                 "receiver_id": receiver_account_id.clone(),
             })
             .to_string()
@@ -186,7 +189,6 @@ impl Nescrow {
         receiver_account_id: AccountId,
         amount: UsdtBalance,
     ) {
-        // Check if the promise succeeded by calling the method outlined in external.rs
         if call_result.is_err() {
             panic!("There was an error during ft_transfer");
         }
@@ -196,14 +198,14 @@ impl Nescrow {
             .get_mut(&receiver_username)
             .expect("Customer is not registered. Register the customer first.");
 
-        let ammount_to_deduct = amount.borrow();
+        let ammount_to_deduct = UsdtBalance::from_usdt_to_human(*amount.borrow());
 
         let existing_deposit = sender_deposits
             .get(&receiver_account_id)
             .unwrap_or_else(|| panic!("Deposit doesn't exist"));
 
         assert!(
-            existing_deposit >= ammount_to_deduct,
+            *existing_deposit >= ammount_to_deduct,
             "Amount to deduct is bigger then deposit"
         );
 
