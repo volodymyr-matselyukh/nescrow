@@ -1,9 +1,9 @@
+use super::{Nescrow, NescrowExt};
+use crate::contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT;
+use crate::enums::storage_keys::StorageKeys;
 use near_sdk::store::IterableMap;
 use near_sdk::{env, log, near, AccountId, NearToken, Promise};
 use rust_decimal_macros::dec;
-use crate::contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT;
-use crate::enums::storage_keys::StorageKeys;
-use super::{NescrowExt, Nescrow};
 
 #[near]
 #[allow(dead_code)]
@@ -14,16 +14,32 @@ impl Nescrow {
             panic!("Username should be provided");
         }
 
-        if self.deposits.contains_key(&username) {
-            panic!("Username already register");
+        if self.deposits.contains_key(&username)
+            && self
+                .deposits
+                .get(&username)
+                .unwrap()
+                .contains_key(&account_id)
+        {
+            panic!("Combination of username and account id is already registered");
         }
 
-        let username_hash = env::sha256_array(&username.as_bytes());
+        if self.deposits.contains_key(&username) {
+            let existing_username_account_balance_map = self
+                .deposits
+                .get_mut(&username)
+                .expect("Account balance map wasn't found");
 
-        let mut account_balance_map = IterableMap::new(StorageKeys::AccountBalance { username_hash });
-        account_balance_map.insert(account_id, dec!(0));
+            existing_username_account_balance_map.insert(account_id, dec!(0));
+        } else {
+            let username_hash = env::sha256_array(&username.as_bytes());
 
-        self.deposits.insert(username, account_balance_map);
+            let mut account_balance_map =
+                IterableMap::new(StorageKeys::AccountBalance { username_hash });
+            account_balance_map.insert(account_id, dec!(0));
+
+            self.deposits.insert(username, account_balance_map);
+        }
 
         let attached_deposit = env::attached_deposit();
 

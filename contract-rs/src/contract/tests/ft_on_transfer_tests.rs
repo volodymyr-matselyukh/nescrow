@@ -109,7 +109,7 @@ fn test_ft_transfer_callback() {
         successful_promise,
         account_1_username(),
         account_1(),
-        UsdtBalance::from_human_to_usdt(withdrawal_ammount), // this method is called by USDT contract. USDT contract uses 6 digits numbers
+        withdrawal_ammount, // this method is called by USDT contract. USDT contract uses 6 digits numbers
     );
 
     let deposit_after_manipulations =

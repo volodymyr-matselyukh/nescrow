@@ -187,7 +187,7 @@ impl Nescrow {
         #[callback_result] call_result: Result<(), PromiseError>,
         receiver_username: String,
         receiver_account_id: AccountId,
-        amount: UsdtBalance,
+        amount: UsdtBalance, // amount here will be in human readable form
     ) {
         if call_result.is_err() {
             panic!("There was an error during ft_transfer");
@@ -198,7 +198,7 @@ impl Nescrow {
             .get_mut(&receiver_username)
             .expect("Customer is not registered. Register the customer first.");
 
-        let ammount_to_deduct = UsdtBalance::from_usdt_to_human(*amount.borrow());
+        let ammount_to_deduct = *amount.borrow();
 
         let existing_deposit = sender_deposits
             .get(&receiver_account_id)

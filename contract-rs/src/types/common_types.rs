@@ -40,6 +40,6 @@ impl UsdtBalanceExt for Decimal {
 
     // converts human money to USDT fakes money
     fn from_human_to_usdt(usdt_amount: Decimal) -> Decimal {
-        return usdt_amount * Decimal::from(USDT_DIGITS);
+        return (usdt_amount * Decimal::from(USDT_DIGITS)).round();
     }
 }

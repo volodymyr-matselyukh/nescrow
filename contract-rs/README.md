@@ -20,9 +20,13 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 `near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "macho-metal.testnet"}' network-config testnet now`
 
-# Call ft_transfer register nescrow.testnet. This will deposit 10 USDT for nescrow
+# Call ft_transfer register nescrow.testnet. This will deposit 10 USDT for nescrow on needofescrow platform
 
 `near contract call-function as-transaction usdt.fakes.testnet ft_transfer_call json-args '{"amount": "10", "receiver_id": "macho-metal.testnet", "msg": "{ \"username\": \"nescrow\" }"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as nescrow.testnet network-config testnet sign-with-keychain send`
+
+# Call ft_transfer for macho-metal.testnet. This will transfer 428 USDT from macho-metal.testnet to nescrow.testnet
+
+`near contract call-function as-transaction usdt.fakes.testnet ft_transfer json-args '{"amount": "428000000", "receiver_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as macho-metal.testnet network-config testnet sign-with-keychain send`
 
 # Call storage_deposit. This will register the account in usdt contract
 
