@@ -1,10 +1,7 @@
 use near_sdk::{env, AccountId};
 use rust_decimal::Decimal;
 
-use crate::types::{
-    common_types::{UsdtBalance, UsdtBalanceExt},
-    task::Task,
-};
+use crate::types::{common_types::UsdtBalance, task::Task};
 
 use super::{NESCROW_BENEFICIARY_ACCOUNT_NAME, NESCROW_DISPUTE_RESOLUTION_FEE, NESCROW_OWNER_FEE};
 
@@ -27,9 +24,7 @@ pub fn get_nescrow_beneficiary_contract() -> AccountId {
 }
 
 pub fn get_dispute_resolution_amount(reward: UsdtBalance) -> UsdtBalance {
-    let human_money_reward = UsdtBalance::to_usdt(reward);
-
-    return NESCROW_DISPUTE_RESOLUTION_FEE * Decimal::from(human_money_reward.0);
+    return NESCROW_DISPUTE_RESOLUTION_FEE * reward;
 }
 
 pub fn get_task_reserverd_amount(task: &Task) -> Decimal {

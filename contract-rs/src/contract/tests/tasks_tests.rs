@@ -35,7 +35,7 @@ fn test_create_task() {
     );
 
     let reward = 1000;
-    let deposit = 1055;
+    let deposit = dec!(1055);
 
     testing_env!(context
         .attached_deposit(NearToken::from_yoctonear(
@@ -47,9 +47,10 @@ fn test_create_task() {
 
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_1(),
-        UsdtBalance::from_usdt(deposit),
+        UsdtBalance::from_human_to_usdt(deposit),
         String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
@@ -88,7 +89,7 @@ fn test_remove_task() {
     const TASK_1_ID: &str = "task_1";
 
     let reward = 1000;
-    let deposit = 1055;
+    let deposit = dec!(1055);
 
     testing_env!(context
         .attached_deposit(NearToken::from_yoctonear(
@@ -100,9 +101,10 @@ fn test_remove_task() {
 
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_1(),
-        UsdtBalance::from_usdt(deposit),
+        UsdtBalance::from_human_to_usdt(deposit),
         String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
@@ -148,15 +150,16 @@ fn test_sign_task_as_owner() {
     const TASK_1_ID: &str = "task_1";
 
     let reward = 1000;
-    let reward_plus_owners_fee = 1055;
+    let reward_plus_owners_fee = dec!(1055);
 
     contract.register_customer(account_1_username(), account_1());
 
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_1(),
-        UsdtBalance::from_usdt(reward_plus_owners_fee),
+        UsdtBalance::from_human_to_usdt(reward_plus_owners_fee),
         String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
@@ -193,15 +196,16 @@ fn test_sign_task_as_owner_wrong_owner() {
     const TASK_1_ID: &str = "task_1";
 
     let reward = 1000;
-    let reward_plus_owners_fee = 1055;
+    let reward_plus_owners_fee = dec!(1055);
 
     contract.register_customer(account_1_username(), account_1());
 
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_1(),
-        UsdtBalance::from_usdt(reward_plus_owners_fee),
+        UsdtBalance::from_human_to_usdt(reward_plus_owners_fee),
         String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
@@ -240,9 +244,10 @@ fn test_create_task_with_not_enough_deposit() {
 
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_1(),
-        reward_plus_owners_fee,
+        UsdtBalance::from_human_to_usdt(reward_plus_owners_fee),
         String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
@@ -273,8 +278,8 @@ fn test_deposits_assigned_correctly_after_task_approval() {
 
     const TASK_1_ID: &str = "task_1";
 
-    let reward = 1000;
-    let reward_plus_owners_fee = 1055; // 1000 + 1000 * 0.05(dispute reservation) + 1000 * 0.005(nescrow fee)
+    let reward = dec!(1000);
+    let reward_plus_owners_fee = dec!(1055); // 1000 + 1000 * 0.05(dispute reservation) + 1000 * 0.005(nescrow fee)
 
     contract.register_customer(account_1_username(), account_1());
     contract.register_customer(account_2_username(), account_2());
@@ -287,7 +292,7 @@ fn test_deposits_assigned_correctly_after_task_approval() {
 
     contract.ft_on_transfer(
         &account_1(),
-        UsdtBalance::from_usdt(reward_plus_owners_fee),
+        UsdtBalance::from_human_to_usdt(reward_plus_owners_fee),
         String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
@@ -298,7 +303,7 @@ fn test_deposits_assigned_correctly_after_task_approval() {
         account_1_username(),
         account_2(),
         account_2_username(),
-        UsdtBalance::from_usdt(reward),
+        reward,
     );
 
     let owner_deposit =
@@ -320,9 +325,9 @@ fn test_deposits_assigned_correctly_after_task_approval() {
 
     // check balances
 
-    let expected_contractor_deposit = UsdtBalance::from_usdt(995); // 1000_000_000 - 10_000_000
-    let expected_owner_deposit = UsdtBalance::from_usdt(50); // 1000_000_000 * 0.05(dispute reservation)
-    let expected_nescrow_deposit = UsdtBalance::from_usdt(10);
+    let expected_contractor_deposit = dec!(995); // 1000 - 5
+    let expected_owner_deposit = dec!(50); // 1000 * 0.05(dispute reservation)
+    let expected_nescrow_deposit = dec!(10); // owner_fee + contractor_fee
 
     let contractor_deposit =
         contract.get_withdrawable_amount_by_account(account_2_username(), account_2());

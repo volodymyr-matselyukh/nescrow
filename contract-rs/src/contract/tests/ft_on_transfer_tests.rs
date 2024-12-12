@@ -22,13 +22,13 @@ fn test_ft_on_transfer() {
         .build());
 
     let human_money_deposit = dec!(1);
-    let usdt_deposit = UsdtBalance::from_human_to_usdt(human_money_deposit);
 
     contract.register_customer(TEST_USERNAME.to_string(), account_1());
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_1(),
-        usdt_deposit,
+        UsdtBalance::from_human_to_usdt(human_money_deposit),
         String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 

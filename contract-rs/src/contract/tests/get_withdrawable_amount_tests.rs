@@ -19,20 +19,19 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
     let human_deposit_from_wallet_1 = dec!(100);
     let human_deposit_from_wallet_2 = dec!(330);
 
-    let usdt_deposit_from_wallet_1 = UsdtBalance::from_human_to_usdt(human_deposit_from_wallet_1);
-    let usdt_deposit_from_wallet_2 = UsdtBalance::from_human_to_usdt(human_deposit_from_wallet_2);
-
     contract.register_customer(TEST_USERNAME.to_string(), account_1());
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_1(),
-        usdt_deposit_from_wallet_1,
+        UsdtBalance::from_human_to_usdt( human_deposit_from_wallet_1),
         String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_2(),
-        usdt_deposit_from_wallet_2,
+        UsdtBalance::from_human_to_usdt(human_deposit_from_wallet_2),
         String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
@@ -66,15 +65,15 @@ fn test_get_withdrawable_amount_when_task_exist() {
     const TASK_1_ID: &str = "task_1";
     let reward = 1000;
     let deposit = 1065;
-    let usdt_deposit_from_wallet_1 = UsdtBalance::from_usdt(deposit);
 
     contract.register_customer(account_1_username(), account_1());
 
     testing_env!(context.predecessor_account_id(usdt_account()).build());
 
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
     contract.ft_on_transfer(
         &account_1(),
-        usdt_deposit_from_wallet_1,
+        UsdtBalance::from_usdt(deposit),
         String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
     );
 
