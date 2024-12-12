@@ -58,9 +58,30 @@ impl Nescrow {
         }
     }
 
-    pub fn is_registered(self, sender_username: String) -> bool {
+    pub fn is_registered(&self, sender_username: String) -> bool {
         let is_username_registered = self.deposits.contains_key(&sender_username);
 
         return is_username_registered;
+    }
+
+    pub fn is_username_account_registered(
+        &self,
+        sender_username: String,
+        account_id: AccountId,
+    ) -> bool {
+        let is_username_registered = self.deposits.contains_key(&sender_username);
+
+        if !is_username_registered {
+            return false;
+        }
+
+        let username_deposits = self
+            .deposits
+            .get(&sender_username)
+            .expect("Username should be registered");
+
+        let is_username_account_registered = username_deposits.contains_key(&account_id);
+
+        return is_username_account_registered;
     }
 }

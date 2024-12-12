@@ -72,3 +72,44 @@ fn test_register_two_accounts() {
 
     assert!(keys_len == 2, "Two accounts should be registered");
 }
+
+#[test]
+fn test_is_account_registered() {
+    let (mut contract, mut context) = setup(None, None);
+
+    assert!(
+        contract.deposits.get(&account_1_username()).is_none(),
+        "Deposit should not exist"
+    );
+
+    testing_env!(context
+        .attached_deposit(NearToken::from_yoctonear(
+            USER_REGISTRATION_STORAGE_USAGE_DEPOSIT
+        ))
+        .build());
+
+    contract.register_customer(account_1_username().to_string(), account_1());
+
+    let is_username1_account1_registered =
+        contract.is_username_account_registered(account_1_username(), account_1());
+
+    assert!(is_username1_account1_registered, "Account 1 should be registered");
+
+    let is_username1_account2_registered =
+        contract.is_username_account_registered(account_1_username(), account_2());
+
+    assert!(!is_username1_account2_registered, "Account 2 should not be registered");
+
+    testing_env!(context
+        .attached_deposit(NearToken::from_yoctonear(
+            USER_REGISTRATION_STORAGE_USAGE_DEPOSIT
+        ))
+        .build());
+
+    contract.register_customer(account_1_username().to_string(), account_2());
+
+    let is_username1_account2_registered =
+        contract.is_username_account_registered(account_1_username(), account_2());
+
+    assert!(is_username1_account2_registered, "Account 2 should be registered");
+}
