@@ -4,7 +4,10 @@ use crate::{
 };
 
 use super::{Nescrow, NescrowExt};
-use near_sdk::{env, log, near, store::{IterableMap, LookupMap}};
+use near_sdk::{
+    env, log, near,
+    store::{IterableMap, IterableSet, LookupMap},
+};
 
 #[near]
 #[allow(dead_code)]
@@ -20,6 +23,7 @@ impl Nescrow {
             tasks: LookupMap::new(StorageKeys::Tasks),
             tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
             tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
+            tasks_for_dispute_resolution: IterableSet::new(StorageKeys::TasksForDisputeResolution),
         }
     }
 
@@ -46,6 +50,7 @@ impl Nescrow {
             deposits: old_state.deposits,
             tasks_per_engineer: old_state.tasks_per_engineer,
             tasks_per_owner: old_state.tasks_per_owner,
+            tasks_for_dispute_resolution: old_state.tasks_for_dispute_resolution,
             tasks: new_tasks,
             //legacy_tasks: LookupMap::new(StorageKeys::LegacyTasks)
         };

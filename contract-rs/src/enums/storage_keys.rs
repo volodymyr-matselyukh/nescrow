@@ -10,6 +10,7 @@ pub enum StorageKeys {
     Tasks,
     TasksPerOwner,
     TasksPerEngineer,
+    TasksForDisputeResolution,
     Tasksv1,
-    LegacyTasks,
+    //LegacyTasks,
 }

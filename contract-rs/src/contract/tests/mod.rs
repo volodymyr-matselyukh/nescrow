@@ -36,3 +36,11 @@ fn account_2_username() -> String {
 fn usdt_account() -> AccountId {
     AccountId::from_str("usdt.fakes.testnet").unwrap()
 }
+
+fn trusted_admin_username() -> String {
+    String::from("nescrow_admin.testnet")
+}
+
+fn trusted_admin_account() -> AccountId {
+    return "nescrow_admin.testnet".parse().unwrap();
+}

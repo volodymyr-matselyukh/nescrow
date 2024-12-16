@@ -59,6 +59,7 @@ impl Nescrow {
             dispute_initiated_by: None,
             dispute_resolved_on: None,
             dispute_resolved_by: None,
+            dispute_resolver_username: None,
             completion_percentage: None,
             claimed_by_contractor_on: None,
             claimed_by_owner_on: None,
@@ -139,6 +140,16 @@ impl Nescrow {
         task.reward = reward;
     }
 
+    pub fn get_owner_tasks_length(&self, task_owner: AccountId) -> usize {
+        let tasks_per_owner = self.tasks_per_owner.get(&task_owner);
+
+        if !tasks_per_owner.is_some() {
+            return 0;
+        }
+
+        return tasks_per_owner.unwrap().len();
+    }
+
     pub fn get_owner_tasks(
         &self,
         task_owner: AccountId,
@@ -171,6 +182,16 @@ impl Nescrow {
             .collect();
     }
 
+    pub fn get_engineer_tasks_length(&self, task_contractor: AccountId) -> usize {
+        let tasks_per_contractor = self.tasks_per_engineer.get(&task_contractor);
+
+        if !tasks_per_contractor.is_some() {
+            return 0;
+        }
+
+        return tasks_per_contractor.unwrap().len();
+    }
+
     pub fn get_engineer_tasks(
         &self,
         task_contractor: AccountId,
@@ -186,6 +207,28 @@ impl Nescrow {
 
         return tasks_per_contractor
             .unwrap()
+            .iter()
+            .take(pagination.take())
+            .skip(pagination.skip())
+            .filter_map(|task_id| {
+                let task = self.tasks.get(task_id);
+
+                if task.is_none() {
+                    return None;
+                }
+
+                let task_unwrapped = task.unwrap();
+
+                return Some(task_unwrapped);
+            })
+            .collect();
+    }
+
+    pub fn get_dispute_tasks(&self, pagination: Option<Pagination>) -> Vec<&Task> {
+        let pagination = pagination.unwrap_or_default();
+
+        return self
+            .tasks_for_dispute_resolution
             .iter()
             .take(pagination.take())
             .skip(pagination.skip())
@@ -435,11 +478,18 @@ impl Nescrow {
 
         task.dispute_initiated_on = Some(block_timestamp_ms());
         task.dispute_initiated_by = Some(dispute_initiator_account_id);
+
+        self.tasks_for_dispute_resolution.insert(task_id);
     }
 
     // resolution is the amount in percent out of the reward which will be paid to contractor
     // for example if reward is 100 and resolution is 80 then contractor should receive 80
-    pub fn resolve_dispute(&mut self, task_id: TaskId, resolution: u8) {
+    pub fn resolve_dispute(
+        &mut self,
+        task_id: TaskId,
+        dispute_resolver_username: String,
+        resolution: u8,
+    ) {
         let dispute_resolver_account_id = env::predecessor_account_id();
 
         let trusted_admins = get_trusted_admin_accounts();
@@ -462,7 +512,7 @@ impl Nescrow {
         );
 
         task.dispute_resolved_on = Some(block_timestamp_ms());
-        task.dispute_resolved_by = Some(dispute_resolver_account_id);
+        task.dispute_resolved_by = Some(dispute_resolver_account_id.clone());
         task.completion_percentage = Some(resolution);
 
         let dispute_resolution_amount = get_dispute_resolution_amount(task.reward);
@@ -503,9 +553,22 @@ impl Nescrow {
         *owner_account_deposit = (*owner_account_deposit).add(owner_share);
 
         // handle nescrow deposit
+        let nescrow_admin_earnings = dec!(2) * dispute_resolution_amount; //one from owner another from candidate
+
+        let nescrow_admin_deposit = self
+            .deposits
+            .get_mut(&dispute_resolver_username.clone())
+            .expect("Dispute resolver username is not registered");
+
+        let nescrow_admin_account_deposit = nescrow_admin_deposit
+            .get_mut(&dispute_resolver_account_id.clone())
+            .expect("Dispute resolver account not found");
+
+        *nescrow_admin_account_deposit = (*nescrow_admin_account_deposit).add(nescrow_admin_earnings);
+
+        // handle nescrow deposit
         let nescrow_earnings = nescrow_owner_fee
-            .add(nescrow_felancer_fee)
-            .add(dec!(2) * dispute_resolution_amount); //one from owner another from candidate
+            .add(nescrow_felancer_fee);
 
         let nescrow_deposit = self
             .deposits

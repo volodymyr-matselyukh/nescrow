@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use near_sdk::store::{IterableMap, LookupMap};
+use near_sdk::store::{IterableMap, IterableSet, LookupMap};
 use near_sdk::{near, AccountId, NearToken};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
@@ -32,6 +32,7 @@ pub struct Nescrow {
     tasks: LookupMap<TaskId, Task>,
     tasks_per_owner: IterableMap<AccountId, HashSet<TaskId>>,
     tasks_per_engineer: IterableMap<AccountId, HashSet<TaskId>>,
+    tasks_for_dispute_resolution: IterableSet<TaskId>
 }
 
 impl Default for Nescrow {
@@ -42,6 +43,7 @@ impl Default for Nescrow {
             tasks: LookupMap::new(StorageKeys::Tasks),
             tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
             tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
+            tasks_for_dispute_resolution: IterableSet::new(StorageKeys::TasksForDisputeResolution)
         }
     }
 }
