@@ -2,20 +2,20 @@ use std::collections::HashSet;
 use std::ops::Add;
 
 use near_sdk::env::block_timestamp_ms;
-use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise};
+use near_sdk::{env, log, near, AccountId, NearToken, Promise};
 use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 
 use crate::contract::utils::{
-    get_dispute_resolution_amount, get_nescrow_beneficiary_contract, get_usdt_contract,
+    get_dispute_resolution_amount, get_nescrow_beneficiary_contract, get_trusted_admin_accounts,
 };
 use crate::types::common_types::{TaskId, UsdtBalance};
 use crate::types::pagination::Pagination;
 use crate::types::task::Task;
 
 use super::{
-    Nescrow, NescrowExt, NESCROW_BENEFICIARY_USERNAME,
-    NESCROW_DISPUTE_RESOLUTION_FEE, NESCROW_FREELANCER_FEE, NESCROW_OWNER_FEE,
-    USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
+    Nescrow, NescrowExt, NESCROW_BENEFICIARY_USERNAME, NESCROW_DISPUTE_RESOLUTION_FEE,
+    NESCROW_FREELANCER_FEE, NESCROW_OWNER_FEE, USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT,
 };
 
 #[near]
@@ -38,8 +38,10 @@ impl Nescrow {
 
         let task_owner_account_id = env::predecessor_account_id();
 
-        let withdrawable_amount =
-            self.get_withdrawable_amount_by_account(owner_username.clone(), task_owner_account_id.clone());
+        let withdrawable_amount = self.get_withdrawable_amount_by_account(
+            owner_username.clone(),
+            task_owner_account_id.clone(),
+        );
 
         let task = Task {
             task_id: task_id.clone(),
@@ -54,7 +56,9 @@ impl Nescrow {
             submitted_by_contractor_on: None,
             approved_on: None,
             dispute_initiated_on: None,
+            dispute_initiated_by: None,
             dispute_resolved_on: None,
+            dispute_resolved_by: None,
             completion_percentage: None,
             claimed_by_contractor_on: None,
             claimed_by_owner_on: None,
@@ -97,9 +101,8 @@ impl Nescrow {
             NearToken::from_yoctonear(USER_TASK_CREATION_STORAGE_USAGE_DEPOSIT)
         );
 
-        let task_reward_including_fees = reward
-            + reward * NESCROW_OWNER_FEE
-            + reward * NESCROW_DISPUTE_RESOLUTION_FEE;
+        let task_reward_including_fees =
+            reward + reward * NESCROW_OWNER_FEE + reward * NESCROW_DISPUTE_RESOLUTION_FEE;
 
         assert!(
             withdrawable_amount >= task_reward_including_fees,
@@ -366,11 +369,10 @@ impl Nescrow {
             .expect("Candidate account not found");
 
         let nescrow_felancer_fee = task.reward * NESCROW_FREELANCER_FEE;
-        let candidate_reward_without_nescrow_fee = task.reward
-            .add(-nescrow_felancer_fee);
+        let candidate_reward_without_nescrow_fee = task.reward.add(-nescrow_felancer_fee);
 
-        let candidate_new_deposit = candidate_account_deposit
-            .add(candidate_reward_without_nescrow_fee);
+        let candidate_new_deposit =
+            candidate_account_deposit.add(candidate_reward_without_nescrow_fee);
 
         *candidate_account_deposit = candidate_new_deposit;
 
@@ -401,71 +403,119 @@ impl Nescrow {
             .get_mut(&get_nescrow_beneficiary_contract())
             .expect("Owner account not found");
 
-        *nescrow_account_deposit = (*nescrow_account_deposit)
-            .add(nescrow_earnings);
+        *nescrow_account_deposit = (*nescrow_account_deposit).add(nescrow_earnings);
 
         task.approved_on = Some(block_timestamp_ms());
         task.completion_percentage = Some(100);
     }
 
-    pub fn claim_by_contractor(&mut self, task_id: TaskId) -> Promise {
-        let task_contractor_account_id = env::predecessor_account_id();
+    // contractor or owner initiates the dispute
+    pub fn initiate_dispute(&mut self, task_id: TaskId) {
+        let dispute_initiator_account_id = env::predecessor_account_id();
 
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
 
-        assert_eq!(
-            task_contractor_account_id.clone(),
-            task.contractor_account_id,
-            "Task has different contractor."
-        );
+        let is_owner = task.owner_account_id == dispute_initiator_account_id;
+        let is_contractor = task.contractor_account_id == dispute_initiator_account_id;
 
-        assert!(task.approved_on.is_some(), "Task is not approved.");
         assert!(
-            task.completion_percentage.is_some(),
-            "Task completion percantage is undefined."
+            is_owner || is_contractor,
+            "Dispute initiator should be either task owner or task contractor"
         );
 
-        let nescrow_felancer_fee = task.reward * NESCROW_FREELANCER_FEE;
-        let nescrow_owner_fee = task.reward * NESCROW_OWNER_FEE;
-
-        let amount_to_claim =
-            Decimal::from(task.completion_percentage.unwrap() / 100) * task.reward
-                - nescrow_felancer_fee;
-
-        let usdt_contract_id = get_usdt_contract();
-
-        let contractor_transfer_promise = Promise::new(usdt_contract_id.clone()).function_call(
-            "ft_transfer".to_string(),
-            near_sdk::serde_json::json!({
-                "amount": amount_to_claim.round().to_string(),
-                "receiver_id": task_contractor_account_id.clone(),
-            })
-            .to_string()
-            .into_bytes(),
-            NearToken::from_yoctonear(1),
-            Gas::from_tgas(3),
+        assert!(
+            task.signed_by_owner_on.is_some() && task.signed_by_contractor_on.is_some(),
+            "Task is not signed yet. No need to initiate a dispute"
         );
 
-        task.claimed_by_contractor_on = Some(block_timestamp_ms());
-
-        return contractor_transfer_promise.then(
-            Promise::new(usdt_contract_id.clone()).function_call(
-                "ft_transfer".to_string(),
-                near_sdk::serde_json::json!({
-                    "amount": (nescrow_felancer_fee + nescrow_owner_fee).round().to_string(),
-                    "receiver_id": get_nescrow_beneficiary_contract(),
-                })
-                .to_string()
-                .into_bytes(),
-                NearToken::from_yoctonear(1),
-                Gas::from_tgas(3),
-            ),
+        assert!(
+            task.dispute_initiated_on.is_none(),
+            "Dispute is already initiated for this task"
         );
+
+        task.dispute_initiated_on = Some(block_timestamp_ms());
+        task.dispute_initiated_by = Some(dispute_initiator_account_id);
     }
 
-    pub fn reset_claim(&mut self, task_id: TaskId) {
+    // resolution is the amount in percent out of the reward which will be paid to contractor
+    // for example if reward is 100 and resolution is 80 then contractor should receive 80
+    pub fn resolve_dispute(&mut self, task_id: TaskId, resolution: u8) {
+        let dispute_resolver_account_id = env::predecessor_account_id();
+
+        let trusted_admins = get_trusted_admin_accounts();
+
+        assert!(
+            trusted_admins.contains(&dispute_resolver_account_id),
+            "Resolver account is not trusted admin"
+        );
+
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
 
-        task.claimed_by_contractor_on = None;
+        assert!(
+            task.dispute_initiated_on.is_some(),
+            "Task is not under dispute"
+        );
+
+        assert!(
+            task.dispute_resolved_on.is_none(),
+            "Dispute is already resolved"
+        );
+
+        task.dispute_resolved_on = Some(block_timestamp_ms());
+        task.dispute_resolved_by = Some(dispute_resolver_account_id);
+        task.completion_percentage = Some(resolution);
+
+        let dispute_resolution_amount = get_dispute_resolution_amount(task.reward);
+
+        // handle candidate deposit
+        let candidate_deposit = self
+            .deposits
+            .get_mut(&task.contractor_username)
+            .expect("Candidate is not registered");
+
+        let candidate_account_deposit = candidate_deposit
+            .get_mut(&task.contractor_account_id.clone())
+            .expect("Candidate account not found");
+
+        let nescrow_felancer_fee = task.reward * NESCROW_FREELANCER_FEE;
+        let candidate_share = task.reward * Decimal::new(resolution as i64, 0) / dec!(100);
+
+        let candidate_reward_without_fees =
+            candidate_share.add(-nescrow_felancer_fee - dispute_resolution_amount);
+
+        let candidate_new_deposit = candidate_account_deposit.add(candidate_reward_without_fees);
+
+        *candidate_account_deposit = candidate_new_deposit;
+
+        // handle owner deposit
+        let nescrow_owner_fee = task.reward * NESCROW_OWNER_FEE;
+        let owner_share = task.reward - candidate_share;
+
+        let owner_deposit = self
+            .deposits
+            .get_mut(&task.owner_username.clone())
+            .expect("Owner is not registered");
+
+        let owner_account_deposit = owner_deposit
+            .get_mut(&task.owner_account_id.clone())
+            .expect("Owner account not found");
+
+        *owner_account_deposit = (*owner_account_deposit).add(owner_share);
+
+        // handle nescrow deposit
+        let nescrow_earnings = nescrow_owner_fee
+            .add(nescrow_felancer_fee)
+            .add(dec!(2) * dispute_resolution_amount); //one from owner another from candidate
+
+        let nescrow_deposit = self
+            .deposits
+            .get_mut(NESCROW_BENEFICIARY_USERNAME)
+            .expect("Nescrow is not registered");
+
+        let nescrow_account_deposit = nescrow_deposit
+            .get_mut(&get_nescrow_beneficiary_contract())
+            .expect("Owner account not found");
+
+        *nescrow_account_deposit = (*nescrow_account_deposit).add(nescrow_earnings);
     }
 }

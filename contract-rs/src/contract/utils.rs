@@ -34,3 +34,17 @@ pub fn get_task_reserverd_amount(task: &Task) -> Decimal {
 
     return task_reward_with_fees;
 }
+
+pub fn get_trusted_admin_accounts() -> Vec<AccountId> {
+    let current_account_id = env::current_account_id();
+
+    if current_account_id.to_string().ends_with(".testnet") {
+        return vec!["nescrow_admin.testnet".parse().unwrap()];
+    }
+
+    if current_account_id.to_string().ends_with(".near") {
+        panic!("Not in production yet");
+    }
+
+    panic!("Unknown network");
+}

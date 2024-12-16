@@ -22,7 +22,7 @@ fi
 
 ./build.sh
 
-near contract deploy resonant-flag.testnet use-file ./target/wasm32-unknown-unknown/release/nescrow.wasm without-init-call network-config testnet sign-with-keychain send
+near contract deploy old-hose.testnet use-file ./target/wasm32-unknown-unknown/release/nescrow.wasm without-init-call network-config testnet sign-with-keychain send
 
 
 if [[ 
@@ -33,13 +33,13 @@ if [[
 
     echo "----------------Initializing the contract----------------"
 
-    near contract call-function as-transaction resonant-flag.testnet new json-args {} prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as resonant-flag.testnet network-config testnet sign-with-keychain send
+    near contract call-function as-transaction old-hose.testnet new json-args {} prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as old-hose.testnet network-config testnet sign-with-keychain send
 
     echo "----------------Registering contract in usdt.fakes.testnet----------------"
 
-    near contract call-function as-transaction usdt.fakes.testnet storage_deposit json-args '{"account_id": "resonant-flag.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as resonant-flag.testnet network-config testnet sign-with-keychain send
+    near contract call-function as-transaction usdt.fakes.testnet storage_deposit json-args '{"account_id": "old-hose.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as old-hose.testnet network-config testnet sign-with-keychain send
 
     echo "----------------Registering nescrow contract ----------------"
     
-    near contract call-function as-transaction resonant-flag.testnet register_customer json-args '{"username": "nescrow", "account_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as resonant-flag.testnet network-config testnet sign-with-keychain send
+    near contract call-function as-transaction old-hose.testnet register_customer json-args '{"username": "nescrow", "account_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as old-hose.testnet network-config testnet sign-with-keychain send
 fi

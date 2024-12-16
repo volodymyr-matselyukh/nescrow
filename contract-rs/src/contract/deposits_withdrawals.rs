@@ -1,13 +1,11 @@
 use std::borrow::Borrow;
 use std::ops::{Add, Sub};
 
-use near_sdk::store::{IterableMap, LookupMap};
 use near_sdk::{env, log, near, AccountId, Gas, NearToken, Promise, PromiseError};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
 use super::utils::{get_task_reserverd_amount, get_usdt_contract};
-use crate::enums::storage_keys::StorageKeys;
 use crate::types::common_types::{UsdtBalance, UsdtBalanceExt};
 use crate::types::ft_transfer_message::FtOnTransferMessage;
 
@@ -16,20 +14,6 @@ use super::{Nescrow, NescrowExt};
 #[near]
 #[allow(dead_code)]
 impl Nescrow {
-    #[init]
-    pub fn new() -> Self {
-        assert!(!env::state_exists(), "Contract is already initialized");
-
-        log!("Initializing the contract");
-
-        Self {
-            deposits: LookupMap::new(StorageKeys::Deposits),
-            tasks: LookupMap::new(StorageKeys::Tasks),
-            tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
-            tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
-        }
-    }
-
     pub fn get_deposit_by_username(&self, sender_username: String) -> UsdtBalance {
         let deposits = self
             .deposits

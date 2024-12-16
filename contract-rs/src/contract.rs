@@ -11,6 +11,7 @@ use crate::types::task::Task;
 pub mod customer_registration;
 pub mod deposits_withdrawals;
 pub mod tasks;
+pub mod state_migration;
 pub mod utils;
 
 //no calculations performed, just guessing. This also includes gas for tasks approval.
@@ -27,6 +28,7 @@ const NESCROW_BENEFICIARY_USERNAME: &str = "nescrow";
 #[near(contract_state)]
 pub struct Nescrow {
     deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //user name as a root level key
+    //legacy_tasks: LookupMap<TaskId, Task>,
     tasks: LookupMap<TaskId, Task>,
     tasks_per_owner: IterableMap<AccountId, HashSet<TaskId>>,
     tasks_per_engineer: IterableMap<AccountId, HashSet<TaskId>>,
@@ -36,6 +38,7 @@ impl Default for Nescrow {
     fn default() -> Self {
         Self {
             deposits: LookupMap::new(StorageKeys::Deposits),
+            //legacy_tasks: LookupMap::new(StorageKeys::Tasks),
             tasks: LookupMap::new(StorageKeys::Tasks),
             tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
             tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),

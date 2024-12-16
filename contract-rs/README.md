@@ -16,42 +16,46 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 `near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "nescrow.testnet"}' network-config testnet now`
 
-# Read resonant-flag.testnet USDT balance
+# Read old-hose.testnet USDT balance
 
-`near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "resonant-flag.testnet"}' network-config testnet now`
+`near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "old-hose.testnet"}' network-config testnet now`
 
 # Call ft_transfer register nescrow.testnet. This will deposit 10 USDT for nescrow on needofescrow platform
 
-`near contract call-function as-transaction usdt.fakes.testnet ft_transfer_call json-args '{"amount": "10", "receiver_id": "resonant-flag.testnet", "msg": "{ \"username\": \"nescrow\" }"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as nescrow.testnet network-config testnet sign-with-keychain send`
+`near contract call-function as-transaction usdt.fakes.testnet ft_transfer_call json-args '{"amount": "10", "receiver_id": "old-hose.testnet", "msg": "{ \"username\": \"nescrow\" }"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as nescrow.testnet network-config testnet sign-with-keychain send`
 
-# Call ft_transfer for resonant-flag.testnet. This will transfer 428 USDT from resonant-flag.testnet to nescrow.testnet
+# Call ft_transfer for old-hose.testnet. This will transfer 428 USDT from old-hose.testnet to nescrow.testnet
 
-`near contract call-function as-transaction usdt.fakes.testnet ft_transfer json-args '{"amount": "428000000", "receiver_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as resonant-flag.testnet network-config testnet sign-with-keychain send`
+`near contract call-function as-transaction usdt.fakes.testnet ft_transfer json-args '{"amount": "428000000", "receiver_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as old-hose.testnet network-config testnet sign-with-keychain send`
 
 # Call storage_deposit. This will register the account in usdt contract
 
-`near contract call-function as-transaction usdt.fakes.testnet storage_deposit json-args '{"account_id": "resonant-flag.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as resonant-flag.testnet network-config testnet sign-with-keychain send`
+`near contract call-function as-transaction usdt.fakes.testnet storage_deposit json-args '{"account_id": "old-hose.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as old-hose.testnet network-config testnet sign-with-keychain send`
 
 # Call register_customer register nescrow
 
-`near contract call-function as-transaction resonant-flag.testnet register_customer json-args '{"username": "nescrow", "account_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as resonant-flag.testnet network-config testnet sign-with-keychain send`
+`near contract call-function as-transaction old-hose.testnet register_customer json-args '{"username": "nescrow", "account_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as old-hose.testnet network-config testnet sign-with-keychain send`
 
 # Read get_deposit_by_username
 
-`near contract call-function as-read-only resonant-flag.testnet get_deposit_by_username json-args '{"sender_username": "vovik"}' network-config testnet now`
+`near contract call-function as-read-only old-hose.testnet get_deposit_by_username json-args '{"sender_username": "vovik"}' network-config testnet now`
 
 # Read get_withdrawable_amount_by_account
 
-`near contract call-function as-read-only resonant-flag.testnet get_withdrawable_amount_by_account json-args '{"sender_username": "nescrow", "account_id": "nescrow.testnet"}' network-config testnet now`
+`near contract call-function as-read-only old-hose.testnet get_withdrawable_amount_by_account json-args '{"sender_username": "nescrow", "account_id": "nescrow.testnet"}' network-config testnet now`
 
 # Read get_owners_tasks
 
-`near contract call-function as-read-only resonant-flag.testnet get_owner_tasks json-args '{"task_owner": "truthful-circle.testnet"}' network-config testnet now`
+`near contract call-function as-read-only old-hose.testnet get_owner_tasks json-args '{"task_owner": "truthful-circle.testnet"}' network-config testnet now`
 
 # Read get_task
 
-`near contract call-function as-read-only resonant-flag.testnet get_task json-args '{"task_id": "60847862-9533-4318-acd9-c580356ecd6b"}' network-config testnet now`
+`near contract call-function as-read-only old-hose.testnet get_task json-args '{"task_id": "60847862-9533-4318-acd9-c580356ecd6b"}' network-config testnet now`
 
 # Call reset_claim
 
-`near contract call-function as-transaction resonant-flag.testnet reset_claim json-args '{"task_id": "e7d34dcd-aedc-4e36-948b-a3f824600e57"}' prepaid-gas '100.0 Tgas' attached-deposit '0 Near' sign-as resonant-flag.testnet network-config testnet sign-with-keychain send`
+`near contract call-function as-transaction old-hose.testnet reset_claim json-args '{"task_id": "e7d34dcd-aedc-4e36-948b-a3f824600e57"}' prepaid-gas '100.0 Tgas' attached-deposit '0 Near' sign-as old-hose.testnet network-config testnet sign-with-keychain send`
+
+# Call migrate_state
+
+`near contract call-function as-transaction old-hose.testnet migrate_state json-args {} prepaid-gas '100.0 Tgas' attached-deposit '0 NEAR' sign-as old-hose.testnet network-config testnet sign-with-keychain send`
