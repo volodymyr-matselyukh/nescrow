@@ -564,11 +564,11 @@ impl Nescrow {
             .get_mut(&dispute_resolver_account_id.clone())
             .expect("Dispute resolver account not found");
 
-        *nescrow_admin_account_deposit = (*nescrow_admin_account_deposit).add(nescrow_admin_earnings);
+        *nescrow_admin_account_deposit =
+            (*nescrow_admin_account_deposit).add(nescrow_admin_earnings);
 
         // handle nescrow deposit
-        let nescrow_earnings = nescrow_owner_fee
-            .add(nescrow_felancer_fee);
+        let nescrow_earnings = nescrow_owner_fee.add(nescrow_felancer_fee);
 
         let nescrow_deposit = self
             .deposits
@@ -580,5 +580,12 @@ impl Nescrow {
             .expect("Owner account not found");
 
         *nescrow_account_deposit = (*nescrow_account_deposit).add(nescrow_earnings);
+    }
+
+    pub fn get_is_admin() -> bool {
+        let trusted_admins = get_trusted_admin_accounts();
+        let dispute_resolver_account_id = env::predecessor_account_id();
+
+        return trusted_admins.contains(&dispute_resolver_account_id);
     }
 }
