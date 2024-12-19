@@ -1,3 +1,4 @@
+use super::utils::get_trusted_admin_accounts;
 use super::{Nescrow, NescrowExt};
 use crate::contract::USER_REGISTRATION_STORAGE_USAGE_DEPOSIT;
 use crate::enums::storage_keys::StorageKeys;
@@ -83,5 +84,11 @@ impl Nescrow {
         let is_username_account_registered = username_deposits.contains_key(&account_id);
 
         return is_username_account_registered;
+    }
+
+    pub fn get_is_admin(account_id: AccountId) -> bool {
+        let trusted_admins = get_trusted_admin_accounts();
+
+        return trusted_admins.contains(&account_id);
     }
 }

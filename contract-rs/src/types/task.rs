@@ -23,7 +23,7 @@ pub struct Task {
     pub dispute_initiated_on: Option<u64>,
     pub dispute_initiated_by: Option<AccountId>,
     pub dispute_resolved_on: Option<u64>,
-    pub dispute_resolved_by: Option<AccountId>,
+    pub dispute_resolver_account_id: Option<AccountId>,
     pub dispute_resolver_username: Option<String>, // nescrow admin username
     pub completion_percentage: Option<u8>,
     pub claimed_by_contractor_on: Option<u64>,

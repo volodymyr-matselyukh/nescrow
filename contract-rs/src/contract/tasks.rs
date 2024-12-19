@@ -58,7 +58,7 @@ impl Nescrow {
             dispute_initiated_on: None,
             dispute_initiated_by: None,
             dispute_resolved_on: None,
-            dispute_resolved_by: None,
+            dispute_resolver_account_id: None,
             dispute_resolver_username: None,
             completion_percentage: None,
             claimed_by_contractor_on: None,
@@ -512,7 +512,7 @@ impl Nescrow {
         );
 
         task.dispute_resolved_on = Some(block_timestamp_ms());
-        task.dispute_resolved_by = Some(dispute_resolver_account_id.clone());
+        task.dispute_resolver_account_id = Some(dispute_resolver_account_id.clone());
         task.completion_percentage = Some(resolution);
 
         let dispute_resolution_amount = get_dispute_resolution_amount(task.reward);
@@ -582,10 +582,30 @@ impl Nescrow {
         *nescrow_account_deposit = (*nescrow_account_deposit).add(nescrow_earnings);
     }
 
-    pub fn get_is_admin() -> bool {
-        let trusted_admins = get_trusted_admin_accounts();
+    // nescrow admin initiates the dispute resolution
+    pub fn initiate_dispute_resolution(&mut self, task_id: TaskId, dispute_resolver_username: String) {
         let dispute_resolver_account_id = env::predecessor_account_id();
 
-        return trusted_admins.contains(&dispute_resolver_account_id);
+        let task = self.tasks.get_mut(&task_id).expect("Task not found");
+
+        let trusted_admins = get_trusted_admin_accounts();
+
+        assert!(
+            trusted_admins.contains(&dispute_resolver_account_id),
+            "Resolver account is not trusted admin"
+        );
+
+        assert!(
+            task.dispute_initiated_on.is_some(),
+            "Task is not under dispute"
+        );
+
+        assert!(
+            task.dispute_resolver_account_id.is_none(),
+            "Dispute already has a resolver assigned"
+        );
+
+        task.dispute_resolver_account_id = Some(dispute_resolver_account_id.clone());
+        task.dispute_resolver_username = Some(dispute_resolver_username.clone());
     }
 }
