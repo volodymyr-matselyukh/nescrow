@@ -21,7 +21,7 @@ near contract call-function as-transaction usdt.fakes.testnet storage_deposit js
 
 echo "----------------Transferring USDT to new account----------------"
 
-USDT_BALANCE=$(near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "uncovered-disease.testnet"}' network-config testnet now)
+USDT_BALANCE=$(near contract call-function as-read-only usdt.fakes.testnet ft_balance_of json-args '{"account_id": "decorous-effect.testnet"}' network-config testnet now)
 
 near contract call-function as-transaction usdt.fakes.testnet ft_transfer json-args '{"amount": '$(echo "$USDT_BALANCE")', "receiver_id": "'$(echo "$NEW_ACCOUNT")'"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as $OLD_ACCOUNT network-config testnet sign-with-keychain send
 

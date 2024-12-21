@@ -22,7 +22,7 @@ fi
 
 ./build.sh
 
-near contract deploy uncovered-disease.testnet use-file ./target/wasm32-unknown-unknown/release/nescrow.wasm without-init-call network-config testnet sign-with-keychain send
+near contract deploy decorous-effect.testnet use-file ./target/wasm32-unknown-unknown/release/nescrow.wasm without-init-call network-config testnet sign-with-keychain send
 
 
 if [[ 
@@ -33,13 +33,13 @@ if [[
 
     echo "----------------Initializing the contract----------------"
 
-    near contract call-function as-transaction uncovered-disease.testnet new json-args {} prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as uncovered-disease.testnet network-config testnet sign-with-keychain send
+    near contract call-function as-transaction decorous-effect.testnet new json-args {} prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as decorous-effect.testnet network-config testnet sign-with-keychain send
 
     echo "----------------Registering contract in usdt.fakes.testnet----------------"
 
-    near contract call-function as-transaction usdt.fakes.testnet storage_deposit json-args '{"account_id": "uncovered-disease.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as uncovered-disease.testnet network-config testnet sign-with-keychain send
+    near contract call-function as-transaction usdt.fakes.testnet storage_deposit json-args '{"account_id": "decorous-effect.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as decorous-effect.testnet network-config testnet sign-with-keychain send
 
     echo "----------------Registering nescrow contract ----------------"
     
-    near contract call-function as-transaction uncovered-disease.testnet register_customer json-args '{"username": "nescrow", "account_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as uncovered-disease.testnet network-config testnet sign-with-keychain send
+    near contract call-function as-transaction decorous-effect.testnet register_customer json-args '{"username": "nescrow", "account_id": "nescrow.testnet"}' prepaid-gas '100.0 Tgas' attached-deposit '0.01 NEAR' sign-as decorous-effect.testnet network-config testnet sign-with-keychain send
 fi
