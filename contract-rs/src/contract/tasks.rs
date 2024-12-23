@@ -531,15 +531,18 @@ impl Nescrow {
         let candidate_share = task.reward * Decimal::new(resolution as i64, 0) / dec!(100);
 
         let candidate_reward_without_fees =
-            candidate_share.add(-nescrow_felancer_fee - dispute_resolution_amount);
+                candidate_share.add(-nescrow_felancer_fee - dispute_resolution_amount);
 
-        let candidate_new_deposit = candidate_account_deposit.add(candidate_reward_without_fees);
+        if candidate_reward_without_fees > dec!(0) {
+            let candidate_new_deposit =
+                candidate_account_deposit.add(candidate_reward_without_fees);
 
-        *candidate_account_deposit = candidate_new_deposit;
+            *candidate_account_deposit = candidate_new_deposit;
+        }
 
         // handle owner deposit
         let nescrow_owner_fee = task.reward * NESCROW_OWNER_FEE;
-        let owner_share = task.reward - candidate_share;
+        let mut owner_share = task.reward - candidate_share;
 
         let owner_deposit = self
             .deposits
@@ -549,6 +552,11 @@ impl Nescrow {
         let owner_account_deposit = owner_deposit
             .get_mut(&task.owner_account_id.clone())
             .expect("Owner account not found");
+
+                // if fees are higher than contractor's share then the rest should be deducted from owner's reward
+        if candidate_reward_without_fees < dec!(0) {
+            owner_share = owner_share.add(candidate_reward_without_fees);
+        }
 
         *owner_account_deposit = (*owner_account_deposit).add(owner_share);
 
@@ -583,7 +591,11 @@ impl Nescrow {
     }
 
     // nescrow admin initiates the dispute resolution
-    pub fn initiate_dispute_resolution(&mut self, task_id: TaskId, dispute_resolver_username: String) {
+    pub fn initiate_dispute_resolution(
+        &mut self,
+        task_id: TaskId,
+        dispute_resolver_username: String,
+    ) {
         let dispute_resolver_account_id = env::predecessor_account_id();
 
         let task = self.tasks.get_mut(&task_id).expect("Task not found");
