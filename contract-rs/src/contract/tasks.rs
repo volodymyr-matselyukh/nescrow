@@ -274,8 +274,18 @@ impl Nescrow {
             "The task is signed by contractor. Task removal is impossible."
         );
 
-        self.tasks_per_owner.remove(&task_owner);
-        self.tasks_per_engineer.remove(&task.contractor_account_id);
+        let owner_tasks = self
+            .tasks_per_owner
+            .get_mut(&task_owner)
+            .expect("Owner not found");
+        owner_tasks.remove(&task_id);
+
+        let engineer_tasks = self
+            .tasks_per_engineer
+            .get_mut(&task.contractor_account_id)
+            .expect("Contractor not found");
+
+        engineer_tasks.remove(&task_id);
     }
 
     // the task is signed by owner when he is happy with the selected contractor and wants to proceed to work started
@@ -531,7 +541,7 @@ impl Nescrow {
         let candidate_share = task.reward * Decimal::new(resolution as i64, 0) / dec!(100);
 
         let candidate_reward_without_fees =
-                candidate_share.add(-nescrow_felancer_fee - dispute_resolution_amount);
+            candidate_share.add(-nescrow_felancer_fee - dispute_resolution_amount);
 
         if candidate_reward_without_fees > dec!(0) {
             let candidate_new_deposit =
@@ -553,7 +563,7 @@ impl Nescrow {
             .get_mut(&task.owner_account_id.clone())
             .expect("Owner account not found");
 
-                // if fees are higher than contractor's share then the rest should be deducted from owner's reward
+        // if fees are higher than contractor's share then the rest should be deducted from owner's reward
         if candidate_reward_without_fees < dec!(0) {
             owner_share = owner_share.add(candidate_reward_without_fees);
         }
