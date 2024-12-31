@@ -53,6 +53,53 @@ fn test_get_withdrawable_amount_for_multiple_wallets() {
 }
 
 #[test]
+fn test_get_withdrawable_amount_for_multiple_usernames() {
+    let (mut contract, mut context) = setup(None, Some(usdt_account()));
+
+    testing_env!(context
+        .attached_deposit(NearToken::from_yoctonear(
+            USER_REGISTRATION_STORAGE_USAGE_DEPOSIT
+        ))
+        .build());
+
+    let human_deposit_from_username_1 = dec!(100);
+    let human_deposit_from_username_2 = dec!(330);
+
+    contract.register_customer(account_1_username().to_string(), account_1());
+    contract.register_customer(account_2_username().to_string(), account_1());
+
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
+    contract.ft_on_transfer(
+        &account_1(),
+        UsdtBalance::from_human_to_usdt( human_deposit_from_username_1),
+        String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
+    );
+
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
+    contract.ft_on_transfer(
+        &account_1(),
+        UsdtBalance::from_human_to_usdt(human_deposit_from_username_2),
+        String::from(format!("{{\"username\": \"{}\"}}", account_2_username())),
+    );
+
+    let withdrawable_amount_for_wallet_1 =
+        contract.get_withdrawable_amount_by_account(String::from(account_1_username()), account_1());
+
+    assert_eq!(
+        withdrawable_amount_for_wallet_1, human_deposit_from_username_1,
+        "Withdrawable amounts for wallet 1 should match"
+    );
+
+    let withdrawable_amount_for_wallet_2 =
+        contract.get_withdrawable_amount_by_account(String::from(account_2_username()), account_1());
+
+    assert_eq!(
+        withdrawable_amount_for_wallet_2, human_deposit_from_username_2,
+        "Withdrawable amounts for wallet 2 should match"
+    );
+}
+
+#[test]
 fn test_get_withdrawable_amount_when_task_exist() {
     let (mut contract, mut context) = setup(None, Some(account_1()));
 

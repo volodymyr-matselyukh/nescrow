@@ -17,13 +17,14 @@ impl Nescrow {
     pub fn get_deposit_by_username(&self, sender_username: String) -> UsdtBalance {
         let deposits = self
             .deposits
-            .get(&sender_username)
+            .get(&sender_username.clone())
             .unwrap_or_else(|| panic!("Username not registered"));
 
         let mut total_balance = dec!(0);
 
         deposits.iter().for_each(|(account_id, &balance)| {
-            let reserved_ammount = self.get_reserved_deposit_by_tasks(account_id.clone());
+            let reserved_ammount =
+                self.get_reserved_deposit_by_tasks(account_id.clone(), sender_username.clone());
 
             total_balance += balance;
             total_balance = total_balance.sub(reserved_ammount);
@@ -44,7 +45,7 @@ impl Nescrow {
 
         let account_deposit = deposits.get(&account_id);
 
-        let tasks_rewards_sum = self.get_reserved_deposit_by_tasks(account_id);
+        let tasks_rewards_sum = self.get_reserved_deposit_by_tasks(account_id, sender_username);
 
         match account_deposit {
             None => return UsdtBalance::from(0),
@@ -52,7 +53,7 @@ impl Nescrow {
         };
     }
 
-    fn get_reserved_deposit_by_tasks(&self, account_id: AccountId) -> Decimal {
+    fn get_reserved_deposit_by_tasks(&self, account_id: AccountId, username: String) -> Decimal {
         let mut tasks_rewards_sum = dec!(0);
 
         let sender_tasks = self.tasks_per_owner.get(&account_id);
@@ -70,10 +71,13 @@ impl Nescrow {
 
                     let task_unwrapped = task.unwrap();
 
+                    if task_unwrapped.owner_username != username {
+                        return;
+                    }
+
                     let task_reward_with_fees = get_task_reserverd_amount(task_unwrapped);
 
-                    tasks_rewards_sum =
-                        tasks_rewards_sum.add(task_reward_with_fees);
+                    tasks_rewards_sum = tasks_rewards_sum.add(task_reward_with_fees);
                 });
             }
         }
