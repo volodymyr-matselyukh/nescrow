@@ -85,6 +85,17 @@ impl Nescrow {
         return tasks_rewards_sum;
     }
 
+    pub fn get_total_deposit(&self) -> UsdtBalance {
+        let mut total_balance = dec!(0);
+
+        self.investors.iter().for_each(|(investor)| {
+            let investor_deposit = self.get_deposit_by_username(investor.clone());
+            total_balance += investor_deposit;
+        });
+
+        return total_balance;
+    }
+
     // called by USDT contract
     pub fn ft_on_transfer(
         &mut self,
@@ -122,6 +133,8 @@ impl Nescrow {
             None => sender_deposits.insert(sender_id.clone(), nescrow_ammount),
             Some(balance) => sender_deposits.insert(sender_id.clone(), balance + nescrow_ammount),
         };
+
+        self.investors.insert(sender_username.clone());
 
         return dec!(0);
     }

@@ -143,3 +143,43 @@ fn test_get_withdrawable_amount_when_task_exist() {
         "Withdrawable amounts for wallet 1 is wrong"
     );
 }
+
+#[test]
+fn test_get_total_deposit() {
+    let (mut contract, mut context) = setup(None, Some(account_1()));
+
+    testing_env!(context
+        .attached_deposit(NearToken::from_yoctonear(
+            USER_REGISTRATION_STORAGE_USAGE_DEPOSIT * 2
+        ))
+        .build());
+
+    let deposit1 = 1000;
+    let deposit2 = 1500;
+
+    contract.register_customer(account_1_username(), account_1());
+    contract.register_customer(account_2_username(), account_2());
+
+    testing_env!(context.predecessor_account_id(usdt_account()).build());
+
+    // ft_on_transfer is called by usdt contract only. So, here we convert human money to USDT contract money.
+    contract.ft_on_transfer(
+        &account_1(),
+        UsdtBalance::from_usdt(deposit1),
+        String::from(format!("{{\"username\": \"{}\"}}", account_1_username())),
+    );
+
+        contract.ft_on_transfer(
+        &account_2(),
+        UsdtBalance::from_usdt(deposit2),
+        String::from(format!("{{\"username\": \"{}\"}}", account_2_username())),
+    );
+
+    let total_deposit = contract.get_total_deposit();
+    let expected_total_deposit = UsdtBalance::from_usdt(deposit1 + deposit2);
+
+    assert_eq!(
+        total_deposit, expected_total_deposit,
+        "Total deposit is wrong"
+    );
+}

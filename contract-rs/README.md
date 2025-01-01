@@ -52,6 +52,10 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 `near contract call-function as-read-only decorous-effect.testnet get_task json-args '{"task_id": "848533a9-4c60-4ca9-954b-50e3e3527e9e"}' network-config testnet now`
 
+# Read get_total_deposit
+
+`near contract call-function as-read-only decorous-effect.testnet get_total_deposit json-args '{}' network-config testnet now`
+
 # Call reset_claim
 
 `near contract call-function as-transaction decorous-effect.testnet reset_claim json-args '{"task_id": "e7d34dcd-aedc-4e36-948b-a3f824600e57"}' prepaid-gas '100.0 Tgas' attached-deposit '0 Near' sign-as decorous-effect.testnet network-config testnet sign-with-keychain send`

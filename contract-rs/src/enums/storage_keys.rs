@@ -12,5 +12,6 @@ pub enum StorageKeys {
     TasksPerEngineer,
     TasksForDisputeResolution,
     Tasksv1,
+    Investors,
     //LegacyTasks,
 }

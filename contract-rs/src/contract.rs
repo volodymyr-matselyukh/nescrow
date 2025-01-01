@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use near_sdk::store::{IterableMap, IterableSet, LookupMap};
-use near_sdk::{near, AccountId, NearToken};
+use near_sdk::{env, log, near, AccountId, NearToken};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
@@ -28,6 +28,7 @@ const NESCROW_BENEFICIARY_USERNAME: &str = "nescrow";
 #[near(contract_state)]
 pub struct Nescrow {
     deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //user name as a root level key
+    investors: IterableSet<String>, //usernames of people who have deposited money
     //legacy_tasks: LookupMap<TaskId, Task>,
     tasks: LookupMap<TaskId, Task>,
     tasks_per_owner: IterableMap<AccountId, HashSet<TaskId>>,
@@ -39,11 +40,31 @@ impl Default for Nescrow {
     fn default() -> Self {
         Self {
             deposits: LookupMap::new(StorageKeys::Deposits),
+            investors: IterableSet::new(StorageKeys::Investors),
             //legacy_tasks: LookupMap::new(StorageKeys::Tasks),
             tasks: LookupMap::new(StorageKeys::Tasks),
             tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
             tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
             tasks_for_dispute_resolution: IterableSet::new(StorageKeys::TasksForDisputeResolution)
+        }
+    }
+}
+
+#[near]
+impl Nescrow {
+    #[init]
+    pub fn new() -> Self {
+        assert!(!env::state_exists(), "Contract is already initialized");
+
+        log!("Initializing the contract");
+
+        Self {
+            deposits: LookupMap::new(StorageKeys::Deposits),
+            investors: IterableSet::new(StorageKeys::Investors),
+            tasks: LookupMap::new(StorageKeys::Tasks),
+            tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
+            tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
+            tasks_for_dispute_resolution: IterableSet::new(StorageKeys::TasksForDisputeResolution),
         }
     }
 }

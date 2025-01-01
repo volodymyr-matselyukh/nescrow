@@ -1,58 +1,92 @@
+use std::collections::HashSet;
+
 use crate::{
     enums::storage_keys::StorageKeys,
-    types::{common_types::TaskId, task::Task},
+    types::{
+        common_types::{TaskId, UsdtBalance},
+        task::Task,
+    },
 };
 
 use super::{Nescrow, NescrowExt};
+use borsh::{to_vec, BorshDeserialize};
 use near_sdk::{
-    env, log, near,
+    env, near,
     store::{IterableMap, IterableSet, LookupMap},
+    AccountId,
 };
+
+#[near]
+#[derive(Debug)]
+pub(crate) enum StateVersion {
+    V1,
+    V2,
+    V3,
+}
+
+const VERSION_KEY: &[u8] = b"VERSION";
+
+#[near()]
+pub struct NescrowV1 {
+    deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //user name as a root level key
+    tasks: LookupMap<TaskId, Task>,
+    tasks_per_owner: IterableMap<AccountId, HashSet<TaskId>>,
+    tasks_per_engineer: IterableMap<AccountId, HashSet<TaskId>>,
+    tasks_for_dispute_resolution: IterableSet<TaskId>,
+}
+
+#[near()]
+pub struct NescrowV2 {
+    deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //user name as a root level key
+    investors: IterableSet<String>, //usernames of people who have deposited money
+    tasks: LookupMap<TaskId, Task>,
+    tasks_per_owner: IterableMap<AccountId, HashSet<TaskId>>,
+    tasks_per_engineer: IterableMap<AccountId, HashSet<TaskId>>,
+    tasks_for_dispute_resolution: IterableSet<TaskId>,
+}
 
 #[near]
 #[allow(dead_code)]
 impl Nescrow {
-    #[init]
-    pub fn new() -> Self {
-        assert!(!env::state_exists(), "Contract is already initialized");
+    #[private]
+    pub fn migrate_state() {
+        let old_state: NescrowV1 = env::state_read().expect("Old state doesn't exist");
 
-        log!("Initializing the contract");
+        let current_version = Nescrow::state_version_read();
+        near_sdk::log!("Migrating from version: {:?}", current_version);
 
-        Self {
-            deposits: LookupMap::new(StorageKeys::Deposits),
-            tasks: LookupMap::new(StorageKeys::Tasks),
-            tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
-            tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
-            tasks_for_dispute_resolution: IterableSet::new(StorageKeys::TasksForDisputeResolution),
+        match current_version {
+            StateVersion::V1 => {
+                // migration from V1 to V2
+                let investors = IterableSet::new(StorageKeys::Investors);
+                env::state_write(&NescrowV2 {
+                    deposits: old_state.deposits,
+                    investors,
+                    tasks_per_engineer: old_state.tasks_per_engineer,
+                    tasks_per_owner: old_state.tasks_per_owner,
+                    tasks_for_dispute_resolution: old_state.tasks_for_dispute_resolution,
+                    tasks: old_state.tasks,
+                });
+                Nescrow::state_version_write(&StateVersion::V2);
+            }
+            _ => {
+                near_sdk::log!("Migration done.");
+                return env::value_return(b"\"Migration done.\"");
+            }
         }
     }
 
-    #[private]
-    #[init(ignore_state)]
-    pub fn migrate_state() -> Self {
-        let old_state: Self = env::state_read().expect("Old state doesn't exist");
+    fn state_version_read() -> StateVersion {
+        env::storage_read(VERSION_KEY)
+            .map(|data| {
+                StateVersion::try_from_slice(&data).expect("Cannot deserialize the contract state.")
+            })
+            .unwrap_or(StateVersion::V1) // StateVersion is introduced in V2 State.
+    }
 
-        let mut new_tasks: LookupMap<TaskId, Task> = LookupMap::new(StorageKeys::Tasksv1);
-
-        // for (_, tasks) in old_state.tasks_per_owner.iter() {
-        //     for task_id in tasks.iter() {
-        //         let old_task = old_state
-        //             .legacy_tasks
-        //             .get(task_id)
-        //             .expect(format!("Task {} wasn't found", task_id).as_str())
-        //             .clone();
-
-        //         new_tasks.insert(task_id.clone(), Task { ..old_task });
-        //     }
-        // }
-
-        return Self {
-            deposits: old_state.deposits,
-            tasks_per_engineer: old_state.tasks_per_engineer,
-            tasks_per_owner: old_state.tasks_per_owner,
-            tasks_for_dispute_resolution: old_state.tasks_for_dispute_resolution,
-            tasks: new_tasks,
-            //legacy_tasks: LookupMap::new(StorageKeys::LegacyTasks)
-        };
+    fn state_version_write(version: &StateVersion) {
+        let data = to_vec(&version).expect("Cannot serialize the contract state.");
+        env::storage_write(VERSION_KEY, &data);
+        near_sdk::log!("Migrated to version: {:?}", version);
     }
 }
