@@ -429,6 +429,8 @@ impl Nescrow {
 
         *candidate_account_deposit = candidate_new_deposit;
 
+        self.investors.insert(task.contractor_username.clone());
+
         // handle owner deposit
         let nescrow_owner_fee = task.reward * NESCROW_OWNER_FEE;
         let dispute_resolution_amount = get_dispute_resolution_amount(task.reward);
@@ -457,6 +459,8 @@ impl Nescrow {
             .expect("Owner account not found");
 
         *nescrow_account_deposit = (*nescrow_account_deposit).add(nescrow_earnings);
+
+        self.investors.insert(NESCROW_BENEFICIARY_USERNAME.to_string());
 
         task.approved_on = Some(block_timestamp_ms());
         task.completion_percentage = Some(100);
@@ -521,10 +525,6 @@ impl Nescrow {
             "Dispute is already resolved"
         );
 
-        task.dispute_resolved_on = Some(block_timestamp_ms());
-        task.dispute_resolver_account_id = Some(dispute_resolver_account_id.clone());
-        task.completion_percentage = Some(resolution);
-
         let dispute_resolution_amount = get_dispute_resolution_amount(task.reward);
 
         // handle candidate deposit
@@ -550,6 +550,8 @@ impl Nescrow {
             *candidate_account_deposit = candidate_new_deposit;
         }
 
+        self.investors.insert(task.contractor_username.clone());
+
         // handle owner deposit
         let nescrow_owner_fee = task.reward * NESCROW_OWNER_FEE;
         let mut owner_share = task.reward - candidate_share;
@@ -570,7 +572,7 @@ impl Nescrow {
 
         *owner_account_deposit = (*owner_account_deposit).add(owner_share);
 
-        // handle nescrow deposit
+        // handle nescrow admin deposit
         let nescrow_admin_earnings = dec!(2) * dispute_resolution_amount; //one from owner another from candidate
 
         let nescrow_admin_deposit = self
@@ -585,6 +587,8 @@ impl Nescrow {
         *nescrow_admin_account_deposit =
             (*nescrow_admin_account_deposit).add(nescrow_admin_earnings);
 
+        self.investors.insert(dispute_resolver_username.clone());
+
         // handle nescrow deposit
         let nescrow_earnings = nescrow_owner_fee.add(nescrow_felancer_fee);
 
@@ -598,6 +602,12 @@ impl Nescrow {
             .expect("Owner account not found");
 
         *nescrow_account_deposit = (*nescrow_account_deposit).add(nescrow_earnings);
+        self.investors.insert(NESCROW_BENEFICIARY_USERNAME.to_string());
+
+        // dispute related info
+        task.dispute_resolved_on = Some(block_timestamp_ms());
+        task.dispute_resolver_account_id = Some(dispute_resolver_account_id.clone());
+        task.completion_percentage = Some(resolution);
     }
 
     // nescrow admin initiates the dispute resolution
