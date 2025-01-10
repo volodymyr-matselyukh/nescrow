@@ -24,3 +24,13 @@ pub fn test_usdt_fakes_to_human() {
 
     assert_eq!(human_usdt, dec!(55), "USDT conversion to human is wrong");
 }
+
+#[test]
+pub fn test_usdt_balance_to_string() {
+    let fakes_usdt_1:  UsdtBalance = dec!(1.005);
+    let fakes_usdt_2:  UsdtBalance = dec!(1.005);
+    let fakes_sum = fakes_usdt_1 + fakes_usdt_2;
+    let usdt_string = "2.010";
+
+    assert_eq!(fakes_sum.to_string(), usdt_string, "USDT conversion to string is wrong");
+}

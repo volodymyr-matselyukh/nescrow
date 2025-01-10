@@ -9,7 +9,7 @@ pub struct Pagination {
 
 impl Default for Pagination {
     fn default() -> Self {
-        Self { page: 1, size: 10 }
+        Self { page: 1, size: 50 }
     }
 }
 

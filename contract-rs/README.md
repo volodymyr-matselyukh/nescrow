@@ -50,7 +50,11 @@ In this contract `usdt.fakes.testnet` is used as a contract for USDT fungible to
 
 # Read get_task
 
-`near contract call-function as-read-only decorous-effect.testnet get_task json-args '{"task_id": "848533a9-4c60-4ca9-954b-50e3e3527e9e"}' network-config testnet now`
+`near contract call-function as-read-only decorous-effect.testnet get_task json-args '{"task_id": "6b6704c1-6634-425d-8b85-783354beb0a8"}' network-config testnet now`
+
+# Read get_dispute_tasks
+
+`near contract call-function as-read-only decorous-effect.testnet get_dispute_tasks json-args '{}' network-config testnet now`
 
 # Read get_total_deposit
 

@@ -32,7 +32,7 @@ fn test_ft_on_transfer() {
         String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
-    let actual_deposit = contract.get_deposit_by_username(String::from(TEST_USERNAME));
+    let actual_deposit = contract.get_available_deposit_by_username(String::from(TEST_USERNAME));
 
     assert_eq!(actual_deposit, human_money_deposit, "Deposit should match");
 }
@@ -65,7 +65,7 @@ fn test_ft_on_transfer_multiple_wallets() {
         String::from(format!("{{\"username\": \"{}\"}}", TEST_USERNAME)),
     );
 
-    let actual_deposit = contract.get_deposit_by_username(String::from(TEST_USERNAME));
+    let actual_deposit = contract.get_available_deposit_by_username(String::from(TEST_USERNAME));
     let expected_deposit = dec!(2);
 
     assert_eq!(actual_deposit, expected_deposit, "Deposit should match");
@@ -93,7 +93,7 @@ fn test_ft_transfer_callback() {
     );
 
     let deposit_before_manipulations =
-        contract.get_deposit_by_username(String::from(account_1_username()));
+        contract.get_available_deposit_by_username(String::from(account_1_username()));
     let expected_deposit_before_manipulations = dec!(100);
 
     assert_eq!(
@@ -113,7 +113,7 @@ fn test_ft_transfer_callback() {
     );
 
     let deposit_after_manipulations =
-        contract.get_deposit_by_username(String::from(account_1_username()));
+        contract.get_available_deposit_by_username(String::from(account_1_username()));
     let expected_deposit_after_manipulations = dec!(60);
 
     assert_eq!(

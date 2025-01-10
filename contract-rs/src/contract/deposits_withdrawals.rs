@@ -14,7 +14,53 @@ use super::{Nescrow, NescrowExt};
 #[near]
 #[allow(dead_code)]
 impl Nescrow {
-    pub fn get_deposit_by_username(&self, sender_username: String) -> UsdtBalance {
+    pub fn get_available_deposit_by_username(&self, sender_username: String) -> UsdtBalance {
+        let deposits = self
+            .deposits
+            .get(&sender_username.clone())
+            .unwrap_or_else(|| panic!("Username not registered"));
+
+        let mut total_balance = dec!(0);
+
+        deposits.iter().for_each(|(account_id, &balance)| {
+            let reserved_ammount =
+                self.get_reserved_deposit_by_tasks(account_id.clone(), sender_username.clone());
+
+            total_balance += balance;
+            total_balance = total_balance.sub(reserved_ammount);
+
+            log!("username {sender_username}, account{account_id} balance {total_balance}")
+        });
+
+        return total_balance;
+    }
+
+    // this will include deposit which is blocked by incomplete tasks
+    pub fn get_total_deposit_by_username(&self, sender_username: String) -> UsdtBalance {
+        let deposits = self
+            .deposits
+            .get(&sender_username.clone())
+            .unwrap_or_else(|| panic!("Username not registered"));
+
+        let mut total_balance = dec!(0);
+
+        deposits.iter().for_each(|(account_id, &balance)| {
+            let completed_tasks_rewards =
+                self.get_completed_tasks_rewards(account_id.clone(), sender_username.clone());
+
+            total_balance += balance;
+            total_balance = total_balance.sub(completed_tasks_rewards);
+
+            log!("username {sender_username}, account{account_id} balance {total_balance}")
+        });
+
+        return total_balance;
+    }
+
+    pub fn get_deposit_by_username_including_tasks_reservations(
+        &self,
+        sender_username: String,
+    ) -> UsdtBalance {
         let deposits = self
             .deposits
             .get(&sender_username.clone())
@@ -53,6 +99,7 @@ impl Nescrow {
         };
     }
 
+    // deposit which has been put into the task reward
     fn get_reserved_deposit_by_tasks(&self, account_id: AccountId, username: String) -> Decimal {
         let mut tasks_rewards_sum = dec!(0);
 
@@ -75,6 +122,63 @@ impl Nescrow {
                         return;
                     }
 
+                    // if task_unwrapped.dispute_resolved_on.is_some()
+                    //     || task_unwrapped.approved_on.is_some()
+                    // {
+                    //     return;
+                    // }
+
+                    log!(
+                        "task id {}, task reward {}",
+                        task_unwrapped.task_id,
+                        task_unwrapped.reward
+                    );
+
+                    let task_reward_with_fees = get_task_reserverd_amount(task_unwrapped);
+
+                    tasks_rewards_sum = tasks_rewards_sum.add(task_reward_with_fees);
+                });
+            }
+        }
+
+        return tasks_rewards_sum;
+    }
+
+    // get deposit spent only on completed tasks
+    fn get_completed_tasks_rewards(&self, account_id: AccountId, username: String) -> Decimal {
+        let mut tasks_rewards_sum = dec!(0);
+
+        let sender_tasks = self.tasks_per_owner.get(&account_id);
+
+        if sender_tasks.is_some() {
+            let unwrapped_tasks = sender_tasks.unwrap();
+
+            if unwrapped_tasks.len() > 0 {
+                unwrapped_tasks.iter().for_each(|task_id| {
+                    let task = self.tasks.get(task_id);
+
+                    if task.is_none() {
+                        return;
+                    }
+
+                    let task_unwrapped = task.unwrap();
+
+                    if task_unwrapped.owner_username != username {
+                        return;
+                    }
+
+                    if task_unwrapped.dispute_resolved_on.is_none()
+                        && task_unwrapped.approved_on.is_none()
+                    {
+                        return;
+                    }
+
+                    log!(
+                        "task id {}, task reward {}",
+                        task_unwrapped.task_id,
+                        task_unwrapped.reward
+                    );
+
                     let task_reward_with_fees = get_task_reserverd_amount(task_unwrapped);
 
                     tasks_rewards_sum = tasks_rewards_sum.add(task_reward_with_fees);
@@ -88,8 +192,8 @@ impl Nescrow {
     pub fn get_total_deposit(&self) -> UsdtBalance {
         let mut total_balance = dec!(0);
 
-        self.investors.iter().for_each(|(investor)| {
-            let investor_deposit = self.get_deposit_by_username(investor.clone());
+        self.investors.iter().for_each(|investor| {
+            let investor_deposit = self.get_total_deposit_by_username(investor.clone());
             total_balance += investor_deposit;
         });
 

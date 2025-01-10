@@ -272,7 +272,10 @@ fn test_total_deposit_is_the_same_after_task_dispute_resolution() {
     // check balances
     let total_deposit = contract.get_total_deposit();
 
-    assert_eq!(total_deposit, reward_plus_owners_fee, "Total deposit should not be changed");
+    assert_eq!(
+        total_deposit, reward_plus_owners_fee,
+        "Total deposit should not be changed"
+    );
 }
 
 #[test]
@@ -341,5 +344,8 @@ fn test_total_deposit_is_the_same_after_task_approval() {
     // check balances
     let total_deposit = contract.get_total_deposit();
 
-    assert_eq!(total_deposit, reward_plus_owners_fee, "Total deposit should not be changed");
+    assert_eq!(
+        total_deposit, reward_plus_owners_fee,
+        "Total deposit should not be changed"
+    );
 }

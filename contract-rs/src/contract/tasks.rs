@@ -230,8 +230,6 @@ impl Nescrow {
         return self
             .tasks_for_dispute_resolution
             .iter()
-            .take(pagination.take())
-            .skip(pagination.skip())
             .filter_map(|task_id| {
                 let task = self.tasks.get(task_id);
 
@@ -243,6 +241,8 @@ impl Nescrow {
 
                 return Some(task_unwrapped);
             })
+            .take(pagination.take())
+            .skip(pagination.skip())
             .collect();
     }
 
