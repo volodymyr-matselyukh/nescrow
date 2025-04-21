@@ -29,7 +29,6 @@ const NESCROW_BENEFICIARY_USERNAME: &str = "nescrow";
 pub struct Nescrow {
     deposits: LookupMap<String, IterableMap<AccountId, UsdtBalance>>, //user name as a root level key
     investors: IterableSet<String>, //usernames of people who have deposited money
-    //legacy_tasks: LookupMap<TaskId, Task>,
     tasks: LookupMap<TaskId, Task>,
     tasks_per_owner: IterableMap<AccountId, HashSet<TaskId>>,
     tasks_per_engineer: IterableMap<AccountId, HashSet<TaskId>>,
@@ -41,8 +40,7 @@ impl Default for Nescrow {
         Self {
             deposits: LookupMap::new(StorageKeys::Deposits),
             investors: IterableSet::new(StorageKeys::Investors),
-            //legacy_tasks: LookupMap::new(StorageKeys::Tasks),
-            tasks: LookupMap::new(StorageKeys::Tasks),
+            tasks: LookupMap::new(StorageKeys::Tasksv3),
             tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
             tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
             tasks_for_dispute_resolution: IterableSet::new(StorageKeys::TasksForDisputeResolution)
@@ -61,7 +59,7 @@ impl Nescrow {
         Self {
             deposits: LookupMap::new(StorageKeys::Deposits),
             investors: IterableSet::new(StorageKeys::Investors),
-            tasks: LookupMap::new(StorageKeys::Tasks),
+            tasks: LookupMap::new(StorageKeys::Tasksv3),
             tasks_per_owner: IterableMap::new(StorageKeys::TasksPerOwner),
             tasks_per_engineer: IterableMap::new(StorageKeys::TasksPerEngineer),
             tasks_for_dispute_resolution: IterableSet::new(StorageKeys::TasksForDisputeResolution),

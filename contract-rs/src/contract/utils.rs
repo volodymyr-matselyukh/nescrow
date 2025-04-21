@@ -13,7 +13,7 @@ pub fn get_usdt_contract() -> AccountId {
     }
 
     if current_account_id.to_string().ends_with(".near") {
-        return "usdt.near".parse().unwrap();
+        return "usdt.tether-token.near".parse().unwrap();
     }
 
     panic!("unknown network");
@@ -39,7 +39,10 @@ pub fn get_trusted_admin_accounts() -> Vec<AccountId> {
     let current_account_id = env::current_account_id();
 
     if current_account_id.to_string().ends_with(".testnet") {
-        return vec!["nescrow_admin.testnet".parse().unwrap()];
+        return vec![
+            "nescrow_admin.testnet".parse().unwrap(),
+            "1tagents_nescrow_admin.testnet".parse().unwrap(),
+        ];
     }
 
     if current_account_id.to_string().ends_with(".near") {

@@ -7,11 +7,9 @@ use near_sdk::{
 pub enum StorageKeys {
     Deposits,
     AccountBalance { username_hash: CryptoHash },
-    Tasks,
     TasksPerOwner,
     TasksPerEngineer,
     TasksForDisputeResolution,
-    Tasksv1,
     Investors,
-    //LegacyTasks,
+    Tasksv3
 }

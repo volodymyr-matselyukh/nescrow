@@ -6,8 +6,7 @@ use super::common_types::UsdtBalance;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
-#[derive(BorshSerialize, BorshDeserialize)]
-#[derive(Clone)]
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub struct Task {
     pub task_id: String,
     pub owner_username: String,
@@ -26,6 +25,4 @@ pub struct Task {
     pub dispute_resolver_account_id: Option<AccountId>,
     pub dispute_resolver_username: Option<String>, // nescrow admin username
     pub completion_percentage: Option<u8>,
-    pub claimed_by_contractor_on: Option<u64>,
-    pub claimed_by_owner_on: Option<u64>,
 }

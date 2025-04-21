@@ -61,8 +61,6 @@ impl Nescrow {
             dispute_resolver_account_id: None,
             dispute_resolver_username: None,
             completion_percentage: None,
-            claimed_by_contractor_on: None,
-            claimed_by_owner_on: None,
         };
 
         self.tasks.insert(task_id.clone(), task);
